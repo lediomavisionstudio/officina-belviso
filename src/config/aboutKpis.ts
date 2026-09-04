@@ -8,7 +8,7 @@ export type AboutKpi = {
 
 export const aboutKpis: readonly AboutKpi[] = [
   {
-    value: 40,
+    value: 60,
     suffix: '+',
     title: 'ANNI DI ESPERIENZA',
   },

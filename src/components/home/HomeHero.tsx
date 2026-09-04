@@ -17,12 +17,12 @@ export function HomeHero() {
             <span className="home-hero__title-line" aria-hidden="true">
               <span data-hero-title-text>
                 <span className="home-hero__title-row"><span className="home-hero__title-secondary">Oltre</span>{' '}sessant’anni</span>{' '}
-                <span className="home-hero__title-row"><span className="home-hero__title-secondary">di passione,</span>{' '}competenza</span>{' '}
+                <span className="home-hero__title-row"><span className="home-hero__title-secondary">di</span>{' '}passione, competenza</span>{' '}
               </span>
             </span>
             <span className="home-hero__title-line" aria-hidden="true">
               <span data-hero-title-text>
-                <span className="home-hero__title-row home-hero__title-secondary">e innovazione al servizio del</span>{' '}
+                <span className="home-hero__title-row"><span className="home-hero__title-secondary">e</span>{' '}innovazione{' '}<span className="home-hero__title-secondary">al servizio del</span></span>{' '}
                 <span className="home-hero__title-row">trasporto pesante.</span>
               </span>
             </span>
