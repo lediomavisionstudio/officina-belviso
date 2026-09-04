@@ -15,10 +15,16 @@ export function HomeHero() {
             data-hero-reveal
           >
             <span className="home-hero__title-line" aria-hidden="true">
-              <span data-hero-title-text>Oltre sessant’anni di passione,</span>
+              <span data-hero-title-text>
+                <span className="home-hero__title-row"><span className="home-hero__title-secondary">Oltre</span>{' '}sessant’anni</span>{' '}
+                <span className="home-hero__title-row"><span className="home-hero__title-secondary">di passione,</span>{' '}competenza</span>{' '}
+              </span>
             </span>
             <span className="home-hero__title-line" aria-hidden="true">
-              <span data-hero-title-text>competenza e innovazione al servizio del trasporto pesante.</span>
+              <span data-hero-title-text>
+                <span className="home-hero__title-row home-hero__title-secondary">e innovazione al servizio del</span>{' '}
+                <span className="home-hero__title-row">trasporto pesante.</span>
+              </span>
             </span>
           </h1>
           <p className="home-hero__description" data-hero-reveal>
