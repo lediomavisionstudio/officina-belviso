@@ -654,6 +654,35 @@ section[id] {
   line-height: 1.7;
 }
 
+.home-about__history {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: fit-content;
+  max-width: 100%;
+  margin-top: var(--space-4);
+  color: var(--ink);
+  font-size: var(--type-caption-size);
+  font-weight: var(--type-caption-weight);
+  letter-spacing: var(--type-caption-letter-spacing);
+  white-space: nowrap;
+}
+
+.home-about__history-line {
+  display: inline-flex;
+  align-items: center;
+  width: clamp(32px, 6vw, 88px);
+  color: var(--color-accent);
+  letter-spacing: 0;
+}
+
+.home-about__history-line::before {
+  flex: 1;
+  height: 1px;
+  background: currentColor;
+  content: '';
+}
+
 .home-about__stats {
   display: grid;
   margin: clamp(42px, 5vw, 68px) 0 0;

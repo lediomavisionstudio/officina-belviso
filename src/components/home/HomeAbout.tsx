@@ -13,17 +13,22 @@ function AboutCopy() {
   return (
     <div className="home-about__content">
       <HomeSectionHeader
-        eyebrow="Officina Belviso"
-        title="Chi siamo"
+        eyebrow="OLTRE 60 ANNI DI ESPERIENZA"
+        title="Dal 1962, evolviamo insieme ai veicoli."
         titleId="about-title"
-        description="Competenza tecnica, ascolto e attenzione in ogni intervento."
       />
       <p className="home-about__body" data-reveal>
-        Officina Belviso si occupa della manutenzione e della riparazione di
-        veicoli industriali con un approccio fondato su analisi accurate,
-        comunicazione chiara e cura del lavoro. L’impiego di attrezzature moderne
-        supporta diagnosi precise e interventi affidabili, pensati per riportare
-        ogni veicolo nelle migliori condizioni operative.
+        Officina Belviso nasce a Noicattaro dall’esperienza di Felice Belviso e
+        cresce come una storia di famiglia, competenza e passione per la meccanica.
+        <br /><br />
+        Dalle tradizionali balestre ai moderni sistemi elettronici, ogni generazione
+        ha saputo evolvere insieme alla tecnologia, mantenendo intatto ciò che ci
+        distingue da sempre: esperienza, precisione e lavoro di squadra.
+        <span className="home-about__history" aria-label="Dal 1962 a oggi">
+          <span>1962</span>
+          <span className="home-about__history-line" aria-hidden="true">→</span>
+          <span>OGGI</span>
+        </span>
       </p>
     </div>
   )
@@ -86,17 +91,22 @@ export function HomeAbout() {
         <Container className="home-about__layout" data-reveal-group>
           <div className="home-about__content">
             <HomeSectionHeader
-              eyebrow="Officina Belviso"
-              title="Chi siamo"
+              eyebrow="OLTRE 60 ANNI DI ESPERIENZA"
+              title="Dal 1962, evolviamo insieme ai veicoli."
               titleId="about-title"
-              description="Competenza tecnica, ascolto e attenzione in ogni intervento."
             />
             <p className="home-about__body" data-reveal>
-              Officina Belviso si occupa della manutenzione e della riparazione di
-              veicoli industriali con un approccio fondato su analisi accurate,
-              comunicazione chiara e cura del lavoro. L’impiego di attrezzature moderne
-              supporta diagnosi precise e interventi affidabili, pensati per riportare
-              ogni veicolo nelle migliori condizioni operative.
+              Officina Belviso nasce a Noicattaro dall’esperienza di Felice Belviso e
+              cresce come una storia di famiglia, competenza e passione per la meccanica.
+              <br /><br />
+              Dalle tradizionali balestre ai moderni sistemi elettronici, ogni generazione
+              ha saputo evolvere insieme alla tecnologia, mantenendo intatto ciò che ci
+              distingue da sempre: esperienza, precisione e lavoro di squadra.
+              <span className="home-about__history" aria-label="Dal 1962 a oggi">
+                <span>1962</span>
+                <span className="home-about__history-line" aria-hidden="true">→</span>
+                <span>OGGI</span>
+              </span>
             </p>
             <AboutStats />
           </div>
