@@ -1,0 +1,145 @@
+:root {
+  /* Color roles */
+  --color-primary: #171819;
+  --color-secondary: #57595a;
+  --color-accent: #d51f26;
+  --color-accent-on-dark: #ef4249;
+  --color-background: #f3f2ee;
+  --color-surface: #e9e8e3;
+  --color-surface-raised: #faf9f6;
+  --color-surface-field: #f8f7f3;
+  --color-border: rgb(23 24 25 / 14%);
+  --color-border-control: rgb(23 24 25 / 46%);
+  --color-text-primary: #171819;
+  --color-text-secondary: #57595a;
+  --color-success: #287a54;
+  --color-warning: #9a6500;
+  --color-error: #b0151b;
+  --color-info: #2567a7;
+  --color-dark: #0d0e0f;
+  --color-white: #ffffff;
+  --color-focus-ring: rgb(213 31 38 / 13%);
+  --color-placeholder: rgb(87 89 90 / 72%);
+
+  /* Typography */
+  --font-family-sans:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  --type-h1-size: clamp(3.4rem, 5.8vw, 6.6rem);
+  --type-h1-weight: 660;
+  --type-h1-line-height: 0.91;
+  --type-h1-letter-spacing: -0.06em;
+  --type-h1-size-tablet: clamp(3.4rem, 9vw, 5.4rem);
+  --type-h1-size-mobile: clamp(2.7rem, 13.3vw, 4.1rem);
+  --type-h2-size: clamp(2.35rem, 4.7vw, 5.3rem);
+  --type-h2-weight: 610;
+  --type-h2-line-height: 0.98;
+  --type-h2-letter-spacing: -0.055em;
+  --type-h2-size-mobile: clamp(2.35rem, 11.2vw, 3.5rem);
+  --type-h3-size: clamp(1.35rem, 2vw, 2rem);
+  --type-h3-weight: 620;
+  --type-h3-line-height: 1.08;
+  --type-h3-letter-spacing: -0.035em;
+  --type-h4-size: 1rem;
+  --type-h4-weight: 620;
+  --type-h4-line-height: 1.2;
+  --type-body-large-size: clamp(1rem, 1.15vw, 1.12rem);
+  --type-body-large-weight: 400;
+  --type-body-large-line-height: 1.7;
+  --type-body-size: 1rem;
+  --type-body-weight: 400;
+  --type-body-line-height: 1.65;
+  --type-small-size: 0.88rem;
+  --type-small-weight: 400;
+  --type-small-line-height: 1.5;
+  --type-caption-size: 0.72rem;
+  --type-caption-weight: 720;
+  --type-caption-line-height: 1.3;
+  --type-caption-letter-spacing: 0.16em;
+  --type-button-size: 0.88rem;
+  --type-button-weight: 680;
+  --type-button-line-height: 1.15;
+  --type-button-letter-spacing: -0.01em;
+  --type-placeholder-size: 0.65rem;
+  --type-placeholder-weight: 650;
+  --type-placeholder-line-height: 1.2;
+  --type-placeholder-letter-spacing: 0.13em;
+
+  /* Spacing scale */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+
+  /* Shape */
+  --radius-small: 12px;
+  --radius-medium: 14px;
+  --radius-large: 24px;
+  --radius-xl: 36px;
+  --radius-round: 999px;
+
+  /* Elevation */
+  --shadow-xs: 0 8px 24px rgb(23 24 25 / 6%);
+  --shadow-sm: 0 14px 40px rgb(23 24 25 / 5%);
+  --shadow-md: 0 12px 34px rgb(0 0 0 / 14%);
+  --shadow-lg: 0 28px 80px rgb(23 24 25 / 8%);
+  --shadow-xl: 0 26px 66px rgb(23 24 25 / 9%);
+  --shadow-interactive-hover: 0 16px 40px rgb(0 0 0 / 20%);
+
+  /* Motion */
+  --duration-instant: 0.01ms;
+  --duration-fast: 200ms;
+  --duration-quick: 220ms;
+  --duration-base: 240ms;
+  --duration-moderate: 280ms;
+  --duration-slow: 320ms;
+  --duration-image: 520ms;
+  --easing-standard: cubic-bezier(0.22, 1, 0.36, 1);
+  --easing-linear: linear;
+
+  /* Layout */
+  --layout-container-max: 1380px;
+  --layout-gutter: clamp(20px, 4vw, 64px);
+  --layout-section-space: clamp(88px, 10vw, 156px);
+  --layout-control-height: 48px;
+  --layout-card-padding: clamp(24px, 3vw, 36px);
+
+  /* Backwards-compatible semantic aliases */
+  --ink: var(--color-text-primary);
+  --ink-soft: var(--color-text-secondary);
+  --paper: var(--color-background);
+  --paper-bright: var(--color-surface-raised);
+  --surface: var(--color-surface);
+  --line: var(--color-border);
+  --line-control: var(--color-border-control);
+  --field-background: var(--color-surface-field);
+  --red: var(--color-accent);
+  --red-on-dark: var(--color-accent-on-dark);
+  --dark: var(--color-dark);
+  --white: var(--color-white);
+  --container: var(--layout-container-max);
+  --gutter: var(--layout-gutter);
+  --section-space: var(--layout-section-space);
+  --control-height: var(--layout-control-height);
+  --card-padding: var(--layout-card-padding);
+  --radius-control: var(--radius-small);
+  --radius-sm: var(--radius-medium);
+  --radius-md: var(--radius-large);
+  --radius-lg: var(--radius-xl);
+  --radius-pill: var(--radius-round);
+  --shadow-control: var(--shadow-xs);
+  --shadow-button: var(--shadow-md);
+  --shadow-button-hover: var(--shadow-interactive-hover);
+  --shadow-card: var(--shadow-sm);
+  --shadow-card-hover: var(--shadow-xl);
+  --shadow-panel: var(--shadow-lg);
+  --ease: var(--easing-standard);
+}
