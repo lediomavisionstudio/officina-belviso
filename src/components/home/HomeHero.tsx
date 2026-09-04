@@ -28,7 +28,7 @@ export function HomeHero() {
           <div className="home-hero__actions" data-hero-reveal>
             <ButtonLink href="#servizi">Scopri i servizi</ButtonLink>
             <ButtonLink href="#richiedi-preventivo" variant="secondary">
-              Richiedi un preventivo
+              Descrivi problema
             </ButtonLink>
           </div>
         </div>

@@ -3,11 +3,10 @@ import { expect, test, type Page } from '@playwright/test'
 const serviceCases = [
   { id: 'brakes', label: 'Impianto frenante', page: 0 },
   { id: 'compressed-air', label: 'Aria compressa', page: 0 },
-  { id: 'abs', label: 'Diagnosi ABS', page: 0 },
-  { id: 'ebs', label: 'Diagnosi EBS', page: 1 },
+  { id: 'diagnostics-ebs-abs', label: 'Diagnosi EBS/ABS', page: 0 },
   { id: 'ecas', label: 'Diagnosi ECAS', page: 1 },
   { id: 'suspension', label: 'Sospensioni', page: 1 },
-  { id: 'maintenance', label: 'Manutenzione programmata', page: 2 },
+  { id: 'maintenance', label: 'Manutenzione programmata', page: 1 },
 ] as const
 
 async function openServices(page: Page, mobile = false) {
@@ -111,14 +110,14 @@ test.describe('Service quote requests', () => {
       .locator('#richiedi-preventivo')
       .locator('select[name="serviceType"]')
     await expect(serviceType).toHaveValue('')
-    await serviceType.selectOption('abs')
-    await expect(serviceType).toHaveValue('abs')
+    await serviceType.selectOption('diagnostics-ebs-abs')
+    await expect(serviceType).toHaveValue('diagnostics-ebs-abs')
 
     await navigation.getByRole('link', { name: 'Servizi', exact: true }).click()
     await navigation
       .getByRole('link', { name: 'Descrivi problema', exact: true })
       .click()
-    await expect(serviceType).toHaveValue('abs')
+    await expect(serviceType).toHaveValue('diagnostics-ebs-abs')
   })
 
   test('works with the mobile Journey without sticky or vertical misalignment', async ({
@@ -133,7 +132,10 @@ test.describe('Service quote requests', () => {
     await carousel
       .getByRole('button', { name: 'Servizio successivo' })
       .click({ force: true })
-    const service = serviceCases[1]
+    await carousel
+      .getByRole('button', { name: 'Servizio successivo' })
+      .click({ force: true })
+    const service = serviceCases[2]
     const card = carousel.locator(`[data-service-id="${service.id}"]`)
     await expect(card).toBeInViewport()
     await card.getByRole('link', { name: 'Richiedi preventivo' }).click()
@@ -159,7 +161,7 @@ test.describe('Service quote requests', () => {
     await carousel
       .getByRole('button', { name: 'Servizio successivo' })
       .click({ force: true })
-    const service = serviceCases[3]
+    const service = serviceCases[2]
     const card = carousel.locator(`[data-service-id="${service.id}"]`)
     await expect(card).toBeInViewport()
     await card.getByRole('link', { name: 'Richiedi preventivo' }).click()

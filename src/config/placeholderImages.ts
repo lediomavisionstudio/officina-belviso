@@ -55,7 +55,6 @@ export const placeholderImages = {
   services: [
     pexelsPhoto(30470930, 'https://www.pexels.com/photo/automotive-brake-maintenance-in-workshop-30470930/', 'Dettaglio di un intervento professionale su un impianto frenante'),
     pexelsPhoto(9754814, 'https://www.pexels.com/photo/an-air-compressor-9754814/', 'Compressore d\u2019aria in un ambiente di lavoro industriale', '50% 55%'),
-    pexelsPhoto(9626877, 'https://www.pexels.com/photo/a-mechanic-checking-the-engine-of-the-car-9626877/', 'Tecnico durante una diagnosi elettronica professionale', '50% 58%'),
     pexelsPhoto(7564861, 'https://www.pexels.com/photo/mechanic-repairing-a-truck-engine-7564861/', 'Meccanico impegnato nella riparazione del motore di un camion', '50% 42%'),
     pexelsPhoto(7564860, 'https://www.pexels.com/photo/car-mechanic-at-work-7564860/', 'Tecnico al lavoro sui sistemi meccanici di un veicolo industriale', '58% 62%'),
     pexelsPhoto(6720515, 'https://www.pexels.com/photo/a-man-holding-a-tire-6720515/', 'Tecnico durante la manutenzione di una ruota per veicoli pesanti', '50% 45%'),

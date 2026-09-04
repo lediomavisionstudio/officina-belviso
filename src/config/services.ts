@@ -14,18 +14,11 @@ export const serviceDefinitions = [
       'Controllo di compressori, valvole, tubazioni e circuiti pneumatici per individuare perdite, anomalie e cali di pressione.',
   },
   {
-    id: 'abs',
-    title: 'Diagnosi ABS',
-    quoteLabel: 'Diagnosi ABS',
+    id: 'diagnostics-ebs-abs',
+    title: 'Diagnosi EBS/ABS',
+    quoteLabel: 'Diagnosi EBS/ABS',
     description:
-      'Analisi elettronica del sistema antibloccaggio, verifica dei sensori e individuazione delle anomalie che possono compromettere la frenata.',
-  },
-  {
-    id: 'ebs',
-    title: 'Diagnosi EBS',
-    quoteLabel: 'Diagnosi EBS',
-    description:
-      'Controllo del sistema frenante elettronico e dei suoi componenti per identificare guasti e ripristinare un funzionamento corretto.',
+      'Diagnosi dei sistemi elettronici di frenata EBS/ABS per individuare anomalie, guasti e malfunzionamenti dei componenti.',
   },
   {
     id: 'ecas',
