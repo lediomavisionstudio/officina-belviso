@@ -2494,7 +2494,7 @@ section[id] {
 
   .home-hero h1 {
     margin-top: 16px;
-    font-size: var(--type-h1-size-mobile);
+    font-size: clamp(1.8rem, 8.4vw, 2.6rem);
     letter-spacing: -0.055em;
   }
 

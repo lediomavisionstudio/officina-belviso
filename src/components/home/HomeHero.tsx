@@ -11,14 +11,14 @@ export function HomeHero() {
           <p className="eyebrow" data-hero-reveal>Assistenza per veicoli industriali</p>
           <h1
             id="home-hero-title"
-            aria-label="Competenza tecnica per i veicoli industriali."
+            aria-label="Oltre sessant’anni di passione, competenza e innovazione al servizio del trasporto pesante."
             data-hero-reveal
           >
             <span className="home-hero__title-line" aria-hidden="true">
-              <span data-hero-title-text>Competenza tecnica</span>
+              <span data-hero-title-text>Oltre sessant’anni di passione,</span>
             </span>
             <span className="home-hero__title-line" aria-hidden="true">
-              <span data-hero-title-text>per i veicoli industriali.</span>
+              <span data-hero-title-text>competenza e innovazione al servizio del trasporto pesante.</span>
             </span>
           </h1>
           <p className="home-hero__description" data-hero-reveal>

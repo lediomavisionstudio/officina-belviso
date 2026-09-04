@@ -18,12 +18,11 @@ function AboutCopy() {
         titleId="about-title"
       />
       <p className="home-about__body" data-reveal>
-        Officina Belviso nasce a Noicattaro dall’esperienza di Felice Belviso e
-        cresce come una storia di famiglia, competenza e passione per la meccanica.
+        Officina Belviso nasce a Noicattaro nel 1962 dall’esperienza di Felice Belviso, che trasforma la propria competenza artigiana in un’attività dedicata ai veicoli industriali. Da quella prima officina prende forma una storia costruita giorno dopo giorno sulla conoscenza della meccanica, sulla precisione e sul rapporto diretto con chi affida all’officina il proprio mezzo.
         <br /><br />
-        Dalle tradizionali balestre ai moderni sistemi elettronici, ogni generazione
-        ha saputo evolvere insieme alla tecnologia, mantenendo intatto ciò che ci
-        distingue da sempre: esperienza, precisione e lavoro di squadra.
+        Con il passare degli anni, l’esperienza viene trasmessa ai figli e l’attività cresce senza perdere la propria identità familiare. Generazioni diverse lavorano fianco a fianco, unendo esperienza e nuove competenze per affrontare un settore in continua trasformazione.
+        <br /><br />
+        Dalle tradizionali balestre ai sistemi pneumatici, fino alle moderne tecnologie elettroniche e alla diagnostica, Officina Belviso ha seguito l’evoluzione dei veicoli continuando a investire in competenza e aggiornamento. Perché dal 1962 cambiano i mezzi e le tecnologie, ma restano gli stessi valori: esperienza, precisione e lavoro di squadra.
         <span className="home-about__history" aria-label="Dal 1962 a oggi">
           <span>1962</span>
           <span className="home-about__history-line" aria-hidden="true">→</span>
@@ -96,12 +95,11 @@ export function HomeAbout() {
               titleId="about-title"
             />
             <p className="home-about__body" data-reveal>
-              Officina Belviso nasce a Noicattaro dall’esperienza di Felice Belviso e
-              cresce come una storia di famiglia, competenza e passione per la meccanica.
+              Officina Belviso nasce a Noicattaro nel 1962 dall’esperienza di Felice Belviso, che trasforma la propria competenza artigiana in un’attività dedicata ai veicoli industriali. Da quella prima officina prende forma una storia costruita giorno dopo giorno sulla conoscenza della meccanica, sulla precisione e sul rapporto diretto con chi affida all’officina il proprio mezzo.
               <br /><br />
-              Dalle tradizionali balestre ai moderni sistemi elettronici, ogni generazione
-              ha saputo evolvere insieme alla tecnologia, mantenendo intatto ciò che ci
-              distingue da sempre: esperienza, precisione e lavoro di squadra.
+              Con il passare degli anni, l’esperienza viene trasmessa ai figli e l’attività cresce senza perdere la propria identità familiare. Generazioni diverse lavorano fianco a fianco, unendo esperienza e nuove competenze per affrontare un settore in continua trasformazione.
+              <br /><br />
+              Dalle tradizionali balestre ai sistemi pneumatici, fino alle moderne tecnologie elettroniche e alla diagnostica, Officina Belviso ha seguito l’evoluzione dei veicoli continuando a investire in competenza e aggiornamento. Perché dal 1962 cambiano i mezzi e le tecnologie, ma restano gli stessi valori: esperienza, precisione e lavoro di squadra.
               <span className="home-about__history" aria-label="Dal 1962 a oggi">
                 <span>1962</span>
                 <span className="home-about__history-line" aria-hidden="true">→</span>
