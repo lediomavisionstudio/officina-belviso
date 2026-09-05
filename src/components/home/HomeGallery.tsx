@@ -13,7 +13,7 @@ export function HomeGallery() {
       <Container data-reveal-group>
         <HomeSectionHeader
           eyebrow="I nostri lavori"
-          title="Precisione visibile in ogni intervento."
+          title="Il nostro lavoro parla per noi."
           titleId="gallery-title"
           description="Scopri le principali tipologie di intervento dedicate alla diagnosi, alla manutenzione e al ripristino dei veicoli industriali."
         />

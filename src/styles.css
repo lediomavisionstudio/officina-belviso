@@ -1146,8 +1146,7 @@ section[id] {
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .service-card:hover .service-card__body,
-  .service-card:focus-within .service-card__body {
+  .service-card:hover .service-card__body {
     color: var(--white);
     background: var(--red);
   }
@@ -1155,17 +1154,12 @@ section[id] {
   .service-card:hover .service-card__body > span,
   .service-card:hover .service-card__body h3,
   .service-card:hover .service-card__body p,
-  .service-card:hover .service-card__body .card-link,
-  .service-card:focus-within .service-card__body > span,
-  .service-card:focus-within .service-card__body h3,
-  .service-card:focus-within .service-card__body p,
-  .service-card:focus-within .service-card__body .card-link {
+  .service-card:hover .service-card__body .card-link {
     color: var(--white);
   }
 
   .service-card:hover .card-link,
-  .service-card:hover .card-link:hover,
-  .service-card:focus-within .card-link {
+  .service-card:hover .card-link:hover {
     border-color: rgb(255 255 255 / 72%);
     color: var(--white);
   }
