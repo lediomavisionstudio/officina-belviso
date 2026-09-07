@@ -21,7 +21,7 @@ const sectionContent: Record<
 > = {
   quote: {
     eyebrow: 'Contatti',
-    title: 'Richiedi un preventivo',
+    title: 'Descrivi il tuo problema',
     description: [
       'Descrivi il veicolo e l’intervento di cui hai bisogno.',
       'Valuteremo le informazioni fornite per ricontattarti con un riscontro chiaro nel più breve tempo possibile.',
@@ -64,10 +64,13 @@ export function ContactSection({ id, mode }: ContactSectionProps) {
         {mode === 'quote' ? (
           <>
             <div className="contact-section__form" data-reveal>
+              <header className="contact-section__form-heading">
+                <h2 id={titleId}>{content.title}</h2>
+              </header>
               <ContactForm mode={mode} />
             </div>
             <div className="contact-section__intro" data-reveal>
-              <WorkshopBusinessCard titleId={titleId} />
+              <WorkshopBusinessCard />
             </div>
           </>
         ) : (

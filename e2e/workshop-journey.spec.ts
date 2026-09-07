@@ -200,6 +200,12 @@ test.describe('Workshop Journey prototype', () => {
     await page.getByRole('button', { name: 'Apri menu' }).click()
     await page.getByRole('link', { name: 'Descrivi problema', exact: true }).click()
     await expect(page).toHaveURL(/#richiedi-preventivo$/)
+    await expect(
+      page.locator('#richiedi-preventivo .contact-section__form-heading h2'),
+    ).toHaveText('Descrivi il tuo problema')
+    await expect(
+      page.locator('#richiedi-preventivo .business-card'),
+    ).not.toContainText('Richiedi un preventivo')
 
     const quoteOrder = await page.evaluate(() => {
       const form = document.querySelector<HTMLElement>(
@@ -245,6 +251,61 @@ test.describe('Workshop Journey prototype', () => {
         document.documentElement.scrollWidth - document.documentElement.clientWidth,
       ),
     ).toBe(0)
+  })
+
+  test('keeps the quote title above the form and outside the business card', async ({
+    page,
+  }) => {
+    for (const width of [375, 390, 430, 768, 1440]) {
+      await page.setViewportSize({ width, height: 900 })
+      await page.goto('/#richiedi-preventivo')
+
+      const title = page.locator(
+        '#richiedi-preventivo .contact-section__form-heading h2',
+      )
+      const information = page.locator('#richiedi-preventivo .business-card')
+      await expect(title).toHaveText('Descrivi il tuo problema')
+      await expect(information).not.toContainText('Richiedi un preventivo')
+
+      const layout = await page.evaluate(() => {
+        const titleElement = document.querySelector<HTMLElement>(
+          '#richiedi-preventivo .contact-section__form-heading h2',
+        )!
+        const formElement = document.querySelector<HTMLElement>(
+          '#richiedi-preventivo .contact-form',
+        )!
+        const formColumn = titleElement.closest<HTMLElement>(
+          '.contact-section__form',
+        )!
+        const informationColumn = document.querySelector<HTMLElement>(
+          '#richiedi-preventivo .contact-section__intro',
+        )!
+
+        return {
+          formColumn: getComputedStyle(formColumn).gridColumnStart,
+          informationColumn: getComputedStyle(informationColumn).gridColumnStart,
+          informationFollowsForm:
+            Boolean(
+              formColumn.compareDocumentPosition(informationColumn) &
+                Node.DOCUMENT_POSITION_FOLLOWING,
+            ),
+          titleInsideFormColumn: formColumn.contains(titleElement),
+          titlePrecedesForm: Boolean(
+            titleElement.compareDocumentPosition(formElement) &
+              Node.DOCUMENT_POSITION_FOLLOWING,
+          ),
+        }
+      })
+
+      expect(layout.titleInsideFormColumn).toBe(true)
+      expect(layout.titlePrecedesForm).toBe(true)
+      if (width <= 960) {
+        expect(layout.informationFollowsForm).toBe(true)
+      } else {
+        expect(layout.informationColumn).toBe('1')
+        expect(layout.formColumn).toBe('2')
+      }
+    }
   })
 
   test('keeps the horizontal structure but removes cinematic depth for reduced motion', async ({

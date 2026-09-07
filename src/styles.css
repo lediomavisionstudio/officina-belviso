@@ -1414,6 +1414,20 @@ section[id] {
   grid-row: 1;
 }
 
+.contact-section__form-heading {
+  margin-bottom: clamp(var(--space-6), 3vw, var(--space-10));
+}
+
+.contact-section__form-heading h2 {
+  max-width: 12ch;
+  color: var(--ink);
+  font-size: clamp(2.4rem, 4.4vw, 4.75rem);
+  font-weight: 610;
+  letter-spacing: -0.055em;
+  line-height: 0.98;
+  text-wrap: balance;
+}
+
 .business-card {
   min-width: 0;
   padding: clamp(var(--space-6), 3vw, var(--space-10));
@@ -1429,17 +1443,9 @@ section[id] {
   border-bottom: 1px solid rgb(255 255 255 / 12%);
 }
 
-.contact-section__intro .business-card__header h2 {
-  max-width: 11ch;
-  margin-top: var(--space-4);
-  font-size: clamp(2.2rem, 3.4vw, 3.7rem);
-  letter-spacing: -0.05em;
-  line-height: 0.98;
-}
-
 .business-card__header > p:last-child {
   max-width: 40ch;
-  margin-top: var(--space-5);
+  margin-top: var(--space-4);
   color: rgb(255 255 255 / 64%);
   line-height: 1.6;
 }
@@ -2681,8 +2687,12 @@ section[id] {
     border-radius: var(--radius-md);
   }
 
-  .contact-section__intro .business-card__header h2 {
-    font-size: clamp(2.2rem, 10vw, 3.2rem);
+  .contact-section__form-heading {
+    margin-bottom: var(--space-6);
+  }
+
+  .contact-section__form-heading h2 {
+    font-size: clamp(2.25rem, 10vw, 3rem);
   }
 
   .google-reviews,

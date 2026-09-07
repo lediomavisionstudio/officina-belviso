@@ -3,10 +3,6 @@ import { useCookieConsent } from '../../hooks/useCookieConsent'
 import { Button, ButtonLink } from '../ui/Button'
 import { GoogleReviewsCard } from './GoogleReviewsCard'
 
-type WorkshopBusinessCardProps = {
-  titleId: string
-}
-
 type ContactIconName = 'address' | 'email' | 'hours' | 'phone'
 
 function ContactIcon({ name }: { name: ContactIconName }) {
@@ -24,7 +20,7 @@ function ContactIcon({ name }: { name: ContactIconName }) {
   )
 }
 
-export function WorkshopBusinessCard({ titleId }: WorkshopBusinessCardProps) {
+export function WorkshopBusinessCard() {
   const { categories, enableExternalMedia } = useCookieConsent()
   const { contact, googleBusiness, googleMapsUrl, openingHours } = siteConfig
   const phoneHref = contact.phone ? `tel:${contact.phone.replace(/\D/g, '')}` : null
@@ -43,7 +39,6 @@ export function WorkshopBusinessCard({ titleId }: WorkshopBusinessCardProps) {
     <article className="business-card">
       <header className="business-card__header">
         <p className="eyebrow">Informazioni officina</p>
-        <h2 id={titleId}>Richiedi un preventivo</h2>
         <p>Tutto ciò che serve per contattarci e raggiungerci.</p>
       </header>
 

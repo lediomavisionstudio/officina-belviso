@@ -1084,6 +1084,9 @@ export function useHomeMotion(scope: RefObject<HTMLElement | null>) {
               '.google-reviews__actions',
             )
             const map = quoteSection.querySelector<HTMLElement>('.business-map')
+            const formHeading = quoteSection.querySelector<HTMLElement>(
+              '.contact-section__form-heading',
+            )
             const form = quoteSection.querySelector<HTMLElement>('.contact-form')
             const formGroups = Array.from(
               quoteSection.querySelectorAll<HTMLElement>(
@@ -1094,6 +1097,7 @@ export function useHomeMotion(scope: RefObject<HTMLElement | null>) {
               ...(businessHeader ? [businessHeader] : []),
               ...businessDetails,
               ...(reviewCarousel ? [reviewCarousel] : []),
+              ...(formHeading ? [formHeading] : []),
               ...(form ? [form] : []),
               ...formGroups,
             ])
@@ -1159,6 +1163,14 @@ export function useHomeMotion(scope: RefObject<HTMLElement | null>) {
                   )
                 }
                 if (form) {
+                  if (formHeading) {
+                    timeline.fromTo(
+                      formHeading,
+                      { opacity: 0, x: 64 * compactDistance },
+                      { ...finalTweenState, duration: 0.82 },
+                      0.1,
+                    )
+                  }
                   timeline.fromTo(
                     form,
                     { opacity: 0, x: 64 * compactDistance },
