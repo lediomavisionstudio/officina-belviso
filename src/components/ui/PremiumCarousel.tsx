@@ -118,11 +118,15 @@ export function PremiumCarousel({
     const displayedPage = tweenRef.current?.isActive()
       ? targetPageRef.current
       : closestPage
+    const maximumScroll = Math.max(0, track.scrollWidth - track.clientWidth)
+    const isScrollable = maximumScroll > 1
 
     if (!tweenRef.current?.isActive()) targetPageRef.current = closestPage
     setCurrentPage(displayedPage)
-    setCanGoPrevious(displayedPage > 0)
-    setCanGoNext(displayedPage < metrics.pagePositions.length - 1)
+    setCanGoPrevious(isScrollable && displayedPage > 0)
+    setCanGoNext(
+      isScrollable && displayedPage < metrics.pagePositions.length - 1,
+    )
   }, [readCarouselMetrics])
 
   const scheduleStateUpdate = useCallback(() => {
@@ -294,13 +298,14 @@ export function PremiumCarousel({
       ) {
         snapToClosestPage()
       }
-    }, 140)
+    }, 220)
   }, [snapToClosestPage])
 
   useEffect(() => {
     const track = trackRef.current
     if (!track) return
 
+    const supportsScrollEnd = 'onscrollend' in track
     const handleTrackScroll = () => {
       scheduleStateUpdate()
       if (
@@ -311,14 +316,35 @@ export function PremiumCarousel({
         scheduleNativeSnap()
       }
     }
+    const handleScrollEnd = () => {
+      if (
+        !nativeTouchActiveRef.current &&
+        !dragRef.current.active &&
+        !tweenRef.current?.isActive()
+      ) {
+        snapToClosestPage()
+      }
+    }
     const resizeObserver = new ResizeObserver(syncResponsiveLayout)
     resizeObserver.observe(track)
+    track
+      .querySelectorAll<HTMLElement>('[data-carousel-slide]')
+      .forEach((slide) => resizeObserver.observe(slide))
+    const mutationObserver = new MutationObserver(syncResponsiveLayout)
+    mutationObserver.observe(track, { childList: true })
     track.addEventListener('scroll', handleTrackScroll, { passive: true })
+    if (supportsScrollEnd) {
+      track.addEventListener('scrollend', handleScrollEnd)
+    }
     syncResponsiveLayout()
 
     return () => {
       track.removeEventListener('scroll', handleTrackScroll)
+      if (supportsScrollEnd) {
+        track.removeEventListener('scrollend', handleScrollEnd)
+      }
       resizeObserver.disconnect()
+      mutationObserver.disconnect()
       window.cancelAnimationFrame(animationFrameRef.current)
       if (nativeSnapTimerRef.current !== null) {
         window.clearTimeout(nativeSnapTimerRef.current)
@@ -329,7 +355,12 @@ export function PremiumCarousel({
       tweenRef.current?.kill()
       contentTweenRef.current?.kill()
     }
-  }, [scheduleNativeSnap, scheduleStateUpdate, syncResponsiveLayout])
+  }, [
+    scheduleNativeSnap,
+    scheduleStateUpdate,
+    snapToClosestPage,
+    syncResponsiveLayout,
+  ])
 
   useLayoutEffect(() => {
     const track = trackRef.current
@@ -457,6 +488,8 @@ export function PremiumCarousel({
             type="button"
             aria-label={previousLabel}
             disabled={!canGoPrevious}
+            aria-hidden={!canGoPrevious}
+            tabIndex={canGoPrevious ? 0 : -1}
             onClick={() => moveToPage(targetPageRef.current - 1)}
           >
             <span aria-hidden="true">&larr;</span>
@@ -465,6 +498,8 @@ export function PremiumCarousel({
             type="button"
             aria-label={nextLabel}
             disabled={!canGoNext}
+            aria-hidden={!canGoNext}
+            tabIndex={canGoNext ? 0 : -1}
             onClick={() => moveToPage(targetPageRef.current + 1)}
           >
             <span aria-hidden="true">&rarr;</span>
@@ -472,41 +507,55 @@ export function PremiumCarousel({
         </div>
       </div>
       <div
-        className="premium-carousel__track"
-        ref={trackRef}
-        tabIndex={0}
-        aria-label={`${ariaLabel}: usa i tasti freccia o scorri orizzontalmente`}
-        onClickCapture={(event) => {
-          if (dragRef.current.didDrag) event.preventDefault()
-        }}
-        onDragStart={(event) => event.preventDefault()}
-        onKeyDown={handleKeyDown}
-        onPointerCancel={finishPointerDrag}
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={finishPointerDrag}
-        data-carousel-track
+        className="premium-carousel__track-shell"
+        data-can-scroll-previous={canGoPrevious || undefined}
+        data-can-scroll-next={canGoNext || undefined}
       >
-        {slides.map((slide, index) => (
-          <div
-            className="premium-carousel__slide"
-            role="group"
-            aria-label={`${index + 1} di ${slides.length}`}
-            aria-roledescription="slide"
-            data-carousel-slide
-            data-carousel-page-start={index % layout.pageSize === 0}
-            key={index}
-          >
-            {slide}
-          </div>
-        ))}
-        {layout.endSpacerWidth > 0 ? (
-          <div
-            className="premium-carousel__end-spacer"
-            style={{ flexBasis: `${layout.endSpacerWidth}px` }}
-            aria-hidden="true"
-          />
-        ) : null}
+        <span
+          className="premium-carousel__edge premium-carousel__edge--start"
+          aria-hidden="true"
+        />
+        <div
+          className="premium-carousel__track"
+          ref={trackRef}
+          tabIndex={0}
+          aria-label={`${ariaLabel}: usa i tasti freccia o scorri orizzontalmente`}
+          onClickCapture={(event) => {
+            if (dragRef.current.didDrag) event.preventDefault()
+          }}
+          onDragStart={(event) => event.preventDefault()}
+          onKeyDown={handleKeyDown}
+          onPointerCancel={finishPointerDrag}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={finishPointerDrag}
+          data-carousel-track
+        >
+          {slides.map((slide, index) => (
+            <div
+              className="premium-carousel__slide"
+              role="group"
+              aria-label={`${index + 1} di ${slides.length}`}
+              aria-roledescription="slide"
+              data-carousel-slide
+              data-carousel-page-start={index % layout.pageSize === 0}
+              key={index}
+            >
+              {slide}
+            </div>
+          ))}
+          {layout.endSpacerWidth > 0 ? (
+            <div
+              className="premium-carousel__end-spacer"
+              style={{ flexBasis: `${layout.endSpacerWidth}px` }}
+              aria-hidden="true"
+            />
+          ) : null}
+        </div>
+        <span
+          className="premium-carousel__edge premium-carousel__edge--end"
+          aria-hidden="true"
+        />
       </div>
     </div>
   )

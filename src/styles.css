@@ -790,6 +790,7 @@ section[id] {
 }
 
 .premium-carousel {
+  min-width: 0;
   margin-top: clamp(48px, 7vw, 92px);
 }
 
@@ -882,6 +883,8 @@ section[id] {
 .premium-carousel__controls button:disabled {
   cursor: default;
   opacity: 0.32;
+  pointer-events: none;
+  visibility: hidden;
 }
 
 .premium-carousel__controls button span {
@@ -889,18 +892,53 @@ section[id] {
   line-height: 1;
 }
 
+.premium-carousel__track-shell {
+  position: relative;
+  min-width: 0;
+}
+
+.premium-carousel__edge {
+  position: absolute;
+  z-index: 2;
+  top: 4px;
+  bottom: 34px;
+  width: clamp(18px, 3vw, 42px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 220ms var(--ease);
+}
+
+.premium-carousel__edge--start {
+  left: 0;
+  background: linear-gradient(90deg, rgb(10 12 14 / 34%), transparent);
+}
+
+.premium-carousel__edge--end {
+  right: 0;
+  background: linear-gradient(270deg, rgb(10 12 14 / 34%), transparent);
+}
+
+.premium-carousel__track-shell[data-can-scroll-previous='true']
+  .premium-carousel__edge--start,
+.premium-carousel__track-shell[data-can-scroll-next='true']
+  .premium-carousel__edge--end {
+  opacity: 1;
+}
+
 .premium-carousel__track {
   display: flex;
+  width: 100%;
   min-width: 0;
   gap: 18px;
   overflow-x: auto;
   overflow-y: hidden;
   padding-block: 4px 34px;
   cursor: grab;
-  overscroll-behavior-inline: contain;
+  overscroll-behavior-x: contain;
   scroll-behavior: auto;
   scroll-snap-type: x mandatory;
   scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
   touch-action: pan-x pan-y pinch-zoom;
 }
 
@@ -2570,6 +2608,10 @@ section[id] {
   .premium-carousel__track {
     gap: 14px;
     padding-bottom: 28px;
+  }
+
+  .premium-carousel__edge {
+    bottom: 28px;
   }
 
   .premium-carousel__slide {
