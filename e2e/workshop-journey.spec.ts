@@ -82,9 +82,15 @@ test.describe('Workshop Journey prototype', () => {
   })
 
   test('drives the mobile horizontal narrative exclusively with vertical scroll', async ({ page }) => {
-    for (const width of [375, 390, 430]) {
-      await page.setViewportSize({ width, height: 844 })
+    for (const viewport of [
+      { width: 375, height: 812 },
+      { width: 390, height: 844 },
+      { width: 430, height: 932 },
+    ]) {
+      await page.setViewportSize(viewport)
       await page.goto('/')
+      await page.evaluate(() => document.fonts.ready)
+      await page.waitForTimeout(200)
 
       const journey = page.locator('[data-workshop-journey]')
       await expect(journey).toHaveAttribute(
@@ -221,6 +227,49 @@ test.describe('Workshop Journey prototype', () => {
       }
     })
     expect(quoteOrder.form).toBeLessThan(quoteOrder.information)
+  })
+
+  test('keeps mobile menu navigation short and deterministic', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto('/')
+    await page.evaluate(() => document.fonts.ready)
+    await page.waitForTimeout(200)
+
+    const navigateToPanel = async (name: 'Chi siamo' | 'Servizi') => {
+      const panelId = name === 'Servizi' ? 'servizi' : 'chi-siamo'
+      await page.getByRole('button', { name: 'Apri menu' }).click()
+      await page.waitForTimeout(450)
+      const startedAt = await page.evaluate(() => performance.now())
+      await page
+        .getByRole('link', { name, exact: true })
+        .evaluate((link: HTMLAnchorElement) => link.click())
+      await page.waitForFunction(
+        (id) =>
+          Math.abs(
+            document
+              .querySelector(`[data-workshop-panel="${id}"]`)!
+              .getBoundingClientRect().left,
+          ) < 2,
+        panelId,
+      )
+      return (await page.evaluate(() => performance.now())) - startedAt
+    }
+
+    const firstServicesDuration = await navigateToPanel('Servizi')
+    const firstServicesPosition = await page.evaluate(() => window.scrollY)
+    await navigateToPanel('Chi siamo')
+    const secondServicesDuration = await navigateToPanel('Servizi')
+    const secondServicesPosition = await page.evaluate(() => window.scrollY)
+
+    expect(firstServicesDuration).toBeLessThan(700)
+    expect(secondServicesDuration).toBeLessThan(700)
+    expect(Math.abs(secondServicesPosition - firstServicesPosition)).toBeLessThan(2)
+
+    const menuToggle = page.locator('.menu-toggle')
+    await menuToggle.click()
+    await expect(menuToggle).toHaveAttribute('aria-expanded', 'true')
+    await page.getByRole('button', { name: 'Chiudi menu' }).click()
+    await expect(menuToggle).toHaveAttribute('aria-expanded', 'false')
   })
 
   test('remeasures the mobile narrative on orientation changes without losing the active panel', async ({

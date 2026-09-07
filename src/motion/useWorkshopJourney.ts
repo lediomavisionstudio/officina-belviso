@@ -6,6 +6,7 @@ import {
   ENABLE_WORKSHOP_JOURNEY,
   WORKSHOP_JOURNEY_ACTIVE_EVENT,
   WORKSHOP_JOURNEY_DEBUG,
+  WORKSHOP_JOURNEY_MOBILE_QUERY,
   WORKSHOP_JOURNEY_NAVIGATE_EVENT,
   WORKSHOP_JOURNEY_PANEL_IDS,
   isWorkshopJourneyPanel,
@@ -15,8 +16,10 @@ import {
   type WorkshopJourneyNavigateDetail,
   type WorkshopJourneyPanelId,
 } from '../config/workshopJourney'
+import { scrollWindowTo } from '../utils/scrollWindowTo'
 
 gsap.registerPlugin(ScrollTrigger, useGSAP)
+ScrollTrigger.config({ ignoreMobileResize: true })
 
 const interactiveSelector =
   'input, textarea, select, [contenteditable="true"], [data-premium-carousel]'
@@ -586,10 +589,16 @@ export function useWorkshopJourney(rootRef: RefObject<HTMLElement | null>) {
 
           if (compact) {
             journey.dataset.workshopMode = 'mobile-narrative'
+            const mobileOptimized = window.matchMedia(
+              WORKSHOP_JOURNEY_MOBILE_QUERY,
+            ).matches
             const sections = panels.map(
               (panel) => panel.firstElementChild as HTMLElement,
             )
             let refreshFrame = 0
+            let refreshTimer = 0
+            let cancelNavigationTween: (() => void) | null = null
+            let pendingPreservedIndex: number | null = null
             let measuredViewportWidth = viewport.clientWidth || window.innerWidth
             let previousIndex = Math.max(
               0,
@@ -742,10 +751,23 @@ export function useWorkshopJourney(rootRef: RefObject<HTMLElement | null>) {
                 index > previousIndex ? 'forward' : 'backward'
               previousIndex = index
               setPanelState(detail.sectionId, direction)
-              window.scrollTo({
-                behavior: detail.behavior ?? 'smooth',
-                top: trigger.start + geometry.panelStarts[index],
-              })
+              cancelNavigationTween?.()
+              if (mobileOptimized) {
+                cancelNavigationTween = scrollWindowTo({
+                  behavior: detail.behavior ?? 'smooth',
+                  duration: 0.42,
+                  onComplete: () => {
+                    cancelNavigationTween = null
+                    detail.onComplete?.()
+                  },
+                  top: trigger.start + geometry.panelStarts[index],
+                })
+              } else {
+                window.scrollTo({
+                  behavior: detail.behavior ?? 'smooth',
+                  top: trigger.start + geometry.panelStarts[index],
+                })
+              }
             }
 
             const handleHashChange = () => {
@@ -789,13 +811,13 @@ export function useWorkshopJourney(rootRef: RefObject<HTMLElement | null>) {
               )
             }
 
-            const requestRefresh = () => {
+            const refreshGeometry = () => {
               window.cancelAnimationFrame(refreshFrame)
               refreshFrame = window.requestAnimationFrame(() => {
                 const nextViewportWidth = viewport.clientWidth || window.innerWidth
                 const preservePanel =
                   Math.abs(nextViewportWidth - measuredViewportWidth) > 2
-                const preservedIndex = previousIndex
+                const preservedIndex = pendingPreservedIndex ?? previousIndex
                 measure()
                 ScrollTrigger.refresh()
                 measuredViewportWidth = nextViewportWidth
@@ -812,11 +834,60 @@ export function useWorkshopJourney(rootRef: RefObject<HTMLElement | null>) {
                     top: trigger.start + geometry.panelStarts[preservedIndex],
                   })
                 }
+                pendingPreservedIndex = null
               })
             }
-            const resizeObserver = new ResizeObserver(requestRefresh)
-            resizeObserver.observe(viewport)
-            sections.forEach((section) => resizeObserver.observe(section))
+
+            const requestRefresh = (force = false) => {
+              if (
+                mobileOptimized &&
+                !force &&
+                Math.abs(
+                  (viewport.clientWidth || window.innerWidth) -
+                    measuredViewportWidth,
+                ) <= 2
+              ) {
+                return
+              }
+
+              window.clearTimeout(refreshTimer)
+              refreshTimer = window.setTimeout(
+                refreshGeometry,
+                mobileOptimized ? 120 : 0,
+              )
+            }
+
+            const resizeObserver = new ResizeObserver(() => requestRefresh())
+            if (mobileOptimized) resizeObserver.observe(track)
+            else {
+              resizeObserver.observe(viewport)
+              sections.forEach((section) => resizeObserver.observe(section))
+            }
+            const preservePanelAndRefresh = () => {
+              if (
+                Math.abs(
+                  (viewport.clientWidth || window.innerWidth) -
+                    measuredViewportWidth,
+                ) <= 2
+              ) {
+                return
+              }
+              pendingPreservedIndex ??= previousIndex
+              requestRefresh(true)
+            }
+            const refreshAfterOrientation = () => {
+              pendingPreservedIndex ??= previousIndex
+              requestRefresh(true)
+            }
+            const refreshAfterLoad = () => requestRefresh(true)
+            window.addEventListener('resize', preservePanelAndRefresh, {
+              passive: true,
+            })
+            window.addEventListener('orientationchange', refreshAfterOrientation)
+            window.addEventListener('load', refreshAfterLoad, { once: true })
+            void document.fonts?.ready.then(() => {
+              if (!controller.signal.aborted) requestRefresh(true)
+            })
             document.addEventListener(WORKSHOP_JOURNEY_NAVIGATE_EVENT, navigate)
             window.addEventListener('keydown', keydown)
             window.addEventListener('hashchange', handleHashChange)
@@ -838,7 +909,15 @@ export function useWorkshopJourney(rootRef: RefObject<HTMLElement | null>) {
             return () => {
               controller.abort()
               resizeObserver.disconnect()
+              cancelNavigationTween?.()
               window.cancelAnimationFrame(refreshFrame)
+              window.clearTimeout(refreshTimer)
+              window.removeEventListener('resize', preservePanelAndRefresh)
+              window.removeEventListener(
+                'orientationchange',
+                refreshAfterOrientation,
+              )
+              window.removeEventListener('load', refreshAfterLoad)
               document.removeEventListener(WORKSHOP_JOURNEY_NAVIGATE_EVENT, navigate)
               window.removeEventListener('keydown', keydown)
               window.removeEventListener('hashchange', handleHashChange)

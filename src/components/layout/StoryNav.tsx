@@ -2,6 +2,7 @@ import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import {
   ENABLE_WORKSHOP_JOURNEY,
   WORKSHOP_JOURNEY_ACTIVE_EVENT,
+  WORKSHOP_JOURNEY_MOBILE_QUERY,
   WORKSHOP_JOURNEY_NAVIGATE_EVENT,
   isWorkshopJourneyPanel,
   type WorkshopJourneyActiveDetail,
@@ -17,6 +18,7 @@ import { isServiceId } from '../../config/services'
 import { useQuoteRequest } from '../../hooks/useQuoteRequest'
 import { useNavigationMotion } from '../../motion/useNavigationMotion'
 import { getHomeSectionHref, normalizePathname } from '../../utils/path'
+import { scrollWindowTo } from '../../utils/scrollWindowTo'
 
 function getSectionEntryElement(section: HTMLElement) {
   return (
@@ -94,6 +96,40 @@ export function StoryNav() {
       isProgrammaticScrollRef.current = true
       programmaticTargetRef.current = sectionId
       setActiveSection(sectionId)
+
+      const usesTimedMobileScroll =
+        workshopJourney.dataset.workshopMode === 'mobile-narrative' &&
+        window.matchMedia(WORKSHOP_JOURNEY_MOBILE_QUERY).matches
+
+      if (usesTimedMobileScroll) {
+        let cancelled = false
+        const finishProgrammaticScroll = () => {
+          if (cancelled) return
+          cleanupProgrammaticScrollRef.current = null
+          isProgrammaticScrollRef.current = false
+          programmaticTargetRef.current = null
+          setActiveSection(sectionId)
+        }
+
+        cleanupProgrammaticScrollRef.current = () => {
+          cancelled = true
+          isProgrammaticScrollRef.current = false
+          programmaticTargetRef.current = null
+        }
+        document.dispatchEvent(
+          new CustomEvent<WorkshopJourneyNavigateDetail>(
+            WORKSHOP_JOURNEY_NAVIGATE_EVENT,
+            {
+              detail: {
+                sectionId,
+                behavior,
+                onComplete: finishProgrammaticScroll,
+              },
+            },
+          ),
+        )
+        return true
+      }
 
       const targetPanel = workshopJourney.querySelector<HTMLElement>(
         `[data-workshop-panel="${sectionId}"]`,
@@ -178,10 +214,12 @@ export function StoryNav() {
     let lastScrollY = window.scrollY
     let hasMoved = false
     let isComplete = false
+    let cancelTimedScroll: (() => void) | null = null
 
     const cleanup = () => {
       window.cancelAnimationFrame(animationFrame)
       window.removeEventListener('scrollend', finishProgrammaticScroll)
+      cancelTimedScroll?.()
     }
 
     const finishProgrammaticScroll = () => {
@@ -192,6 +230,9 @@ export function StoryNav() {
       cleanupProgrammaticScrollRef.current = null
       isProgrammaticScrollRef.current = false
       programmaticTargetRef.current = null
+      if (window.location.hash !== `#${sectionId}`) {
+        window.history.replaceState(null, '', `#${sectionId}`)
+      }
       updateActiveSectionRef.current()
     }
 
@@ -224,6 +265,17 @@ export function StoryNav() {
     }
 
     cleanupProgrammaticScrollRef.current = cleanup
+
+    if (window.matchMedia(WORKSHOP_JOURNEY_MOBILE_QUERY).matches) {
+      cancelTimedScroll = scrollWindowTo({
+        behavior,
+        duration: 0.42,
+        onComplete: finishProgrammaticScroll,
+        top: getSectionScrollTop(target, navigationRef.current),
+      })
+      return true
+    }
+
     window.addEventListener('scrollend', finishProgrammaticScroll, { once: true })
     animationFrame = window.requestAnimationFrame(monitorScrollPosition)
 

@@ -1,5 +1,6 @@
 export const ENABLE_WORKSHOP_JOURNEY = true
 export const WORKSHOP_JOURNEY_DEBUG = false
+export const WORKSHOP_JOURNEY_MOBILE_QUERY = '(max-width: 767px)'
 
 export const WORKSHOP_JOURNEY_ACTIVE_EVENT =
   'officina:workshop-journey-active'
@@ -33,6 +34,7 @@ export type WorkshopJourneyActiveDetail = {
 export type WorkshopJourneyNavigateDetail = {
   sectionId: WorkshopJourneyPanelId
   behavior?: ScrollBehavior
+  onComplete?: () => void
 }
 
 export function isWorkshopJourneyPanel(
