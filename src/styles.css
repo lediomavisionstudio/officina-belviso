@@ -1326,6 +1326,10 @@ section[id] {
   min-width: 0;
 }
 
+.contact-section__form {
+  min-width: 0;
+}
+
 .contact-section__intro h2 {
   max-width: 720px;
   margin-top: 20px;
@@ -1400,7 +1404,14 @@ section[id] {
 }
 
 .contact-section--quote .contact-section__intro {
+  grid-column: 1;
+  grid-row: 1;
   position: static;
+}
+
+.contact-section--quote .contact-section__form {
+  grid-column: 2;
+  grid-row: 1;
 }
 
 .business-card {
@@ -3485,38 +3496,51 @@ section[id] {
   pointer-events: none;
 }
 
-@media (max-width: 960px), (prefers-reduced-motion: reduce) {
+@media (max-width: 960px) {
   .workshop-journey[data-workshop-mode='mobile'],
+  .workshop-journey[data-workshop-mode='mobile']
+    .workshop-journey__viewport,
+  .workshop-journey[data-workshop-mode='mobile']
+    .workshop-journey__track,
+  .workshop-journey[data-workshop-mode='mobile']
+    .workshop-journey__panel {
+    display: contents;
+  }
+
+  .workshop-journey[data-workshop-mode='mobile']
+    .workshop-journey__line {
+    display: none;
+  }
+
+  .contact-section--quote .contact-section__intro,
+  .contact-section--quote .contact-section__form {
+    grid-column: auto;
+    grid-row: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
   .workshop-journey[data-workshop-mode='reduced'] {
     display: block;
     height: 100dvh;
     overflow-x: auto;
     overflow-y: clip;
     overscroll-behavior-x: contain;
-    scroll-behavior: smooth;
+    scroll-behavior: auto;
     scroll-snap-type: x mandatory;
     scrollbar-width: none;
     width: 100%;
   }
 
-  .workshop-journey[data-workshop-mode='reduced'] {
-    scroll-behavior: auto;
-  }
-
-  .workshop-journey[data-workshop-mode='mobile']
-    .workshop-journey__viewport,
   .workshop-journey[data-workshop-mode='reduced']
     .workshop-journey__viewport {
     display: contents;
   }
 
-  .workshop-journey[data-workshop-mode='mobile']::-webkit-scrollbar,
   .workshop-journey[data-workshop-mode='reduced']::-webkit-scrollbar {
     display: none;
   }
 
-  .workshop-journey[data-workshop-mode='mobile']
-    .workshop-journey__track,
   .workshop-journey[data-workshop-mode='reduced']
     .workshop-journey__track {
     display: flex;
@@ -3524,8 +3548,6 @@ section[id] {
     width: max-content;
   }
 
-  .workshop-journey[data-workshop-mode='mobile']
-    .workshop-journey__panel,
   .workshop-journey[data-workshop-mode='reduced']
     .workshop-journey__panel {
     display: block;
@@ -3538,9 +3560,6 @@ section[id] {
     width: 100vw;
   }
 
-  .workshop-journey[data-workshop-mode='mobile']
-    .workshop-journey__panel
-    > section,
   .workshop-journey[data-workshop-mode='reduced']
     .workshop-journey__panel
     > section {

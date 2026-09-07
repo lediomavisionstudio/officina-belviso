@@ -565,8 +565,27 @@ export function useWorkshopJourney(rootRef: RefObject<HTMLElement | null>) {
             }
           }
 
-          if (compact || reduceMotion) {
-            journey.dataset.workshopMode = reduceMotion ? 'reduced' : 'mobile'
+          if (compact) {
+            journey.dataset.workshopMode = 'mobile'
+            panels.forEach((panel) => {
+              panel.removeAttribute('inert')
+              panel.removeAttribute('aria-hidden')
+            })
+            gsap.set([track, line, ...panels], { clearProps: 'all' })
+
+            return () => {
+              controller.abort()
+              gsap.set([track, line, ...panels], { clearProps: 'all' })
+              panels.forEach((panel) => {
+                panel.removeAttribute('inert')
+                panel.removeAttribute('aria-hidden')
+              })
+              delete journey.dataset.workshopMode
+            }
+          }
+
+          if (reduceMotion) {
+            journey.dataset.workshopMode = 'reduced'
             const smoothBehavior: ScrollBehavior = reduceMotion ? 'auto' : 'smooth'
             let frame = 0
             let programmaticIndex: number | null = null

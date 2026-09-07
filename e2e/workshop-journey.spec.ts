@@ -69,11 +69,11 @@ test.describe('Workshop Journey prototype', () => {
 
     const carousel = page.locator('.home-services [data-premium-carousel]')
     const counter = carousel.locator('.premium-carousel__toolbar > span').first()
-    await expect(counter).toContainText('01 / 03')
+    await expect(counter).toContainText('01 / 02')
     await carousel
       .getByRole('button', { name: 'Servizio successivo' })
       .click({ force: true })
-    await expect(counter).toContainText('02 / 03')
+    await expect(counter).toContainText('02 / 02')
     await expect(page).toHaveURL(/#servizi$/)
     await expect(page.locator('[data-workshop-panel="servizi"]')).toHaveAttribute(
       'aria-hidden',
@@ -81,7 +81,7 @@ test.describe('Workshop Journey prototype', () => {
     )
   })
 
-  test('uses native horizontal snap without page overflow on mobile', async ({ page }) => {
+  test('uses the normal vertical document flow without page overflow on mobile', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 })
     await page.goto('/')
 
@@ -92,24 +92,36 @@ test.describe('Workshop Journey prototype', () => {
         document.documentElement.scrollWidth - document.documentElement.clientWidth,
       ),
     ).toBe(0)
+    await expect(journey.locator('[data-workshop-panel][inert]')).toHaveCount(0)
+    await expect(
+      journey.locator('[data-workshop-panel][aria-hidden]'),
+    ).toHaveCount(0)
+
+    const sectionPositions = await page.evaluate(() =>
+      ['home', 'chi-siamo', 'servizi', 'galleria'].map((id) => {
+        const section = document.getElementById(id)
+        return section
+          ? section.getBoundingClientRect().top + window.scrollY
+          : Number.NaN
+      }),
+    )
+    expect(sectionPositions).toEqual([...sectionPositions].sort((a, b) => a - b))
 
     await page.getByRole('button', { name: 'Apri menu' }).click()
     await page.getByRole('link', { name: 'Servizi', exact: true }).click()
     await expect(page).toHaveURL(/#servizi$/)
-    await expect(page.locator('[data-workshop-panel="servizi"]')).toHaveAttribute(
-      'aria-hidden',
-      'false',
-    )
     await expect(page.locator('.home-services .service-card').first()).toBeInViewport()
+    await expect(
+      page.locator('.story-link[href="#servizi"]'),
+    ).toHaveAttribute('aria-current', 'location')
   })
 
-  test('keeps mobile scene content above the cinematic background and returns from lower sections', async ({
+  test('keeps mobile sections vertical and places the quote form before workshop information', async ({
     page,
   }) => {
     await page.setViewportSize({ width: 390, height: 844 })
-    await page.goto('/#lavora-con-noi')
+    await page.goto('/')
 
-    await expect(page.locator('#lavora-con-noi')).toBeInViewport()
     await page.getByRole('button', { name: 'Apri menu' }).click()
     await page.getByRole('link', { name: 'Chi siamo', exact: true }).click()
 
@@ -118,35 +130,26 @@ test.describe('Workshop Journey prototype', () => {
     await expect(
       page.locator('.story-link[href="#chi-siamo"]'),
     ).toHaveAttribute('aria-current', 'location')
-    await expect
-      .poll(() =>
-        page.evaluate(() =>
-          Math.max(
-            Math.abs(
-              document
-                .querySelector('[data-workshop-panel="chi-siamo"]')!
-                .getBoundingClientRect().left,
-            ),
-            Math.abs(window.scrollY),
-          ),
-        ),
-      )
-      .toBeLessThan(2)
+    expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0)
 
-    expect(
-      await page.evaluate(() => {
-        const journey = document.querySelector<HTMLElement>(
-          '[data-workshop-journey]',
-        )
-        const background = document.querySelector<HTMLElement>(
-          '.cinematic-background',
-        )
-        return (
-          Number(getComputedStyle(journey!).zIndex) >
-          Number(getComputedStyle(background!).zIndex)
-        )
-      }),
-    ).toBe(true)
+    await page.getByRole('button', { name: 'Apri menu' }).click()
+    await page.getByRole('link', { name: 'Descrivi problema', exact: true }).click()
+    await expect(page).toHaveURL(/#richiedi-preventivo$/)
+
+    const quoteOrder = await page.evaluate(() => {
+      const form = document.querySelector<HTMLElement>(
+        '#richiedi-preventivo .contact-form',
+      )
+      const information = document.querySelector<HTMLElement>(
+        '#richiedi-preventivo .contact-section__intro',
+      )
+      return {
+        form: form?.getBoundingClientRect().top ?? Number.POSITIVE_INFINITY,
+        information:
+          information?.getBoundingClientRect().top ?? Number.NEGATIVE_INFINITY,
+      }
+    })
+    expect(quoteOrder.form).toBeLessThan(quoteOrder.information)
   })
 
   test('keeps the horizontal structure but removes cinematic depth for reduced motion', async ({

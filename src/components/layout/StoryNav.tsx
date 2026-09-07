@@ -85,7 +85,11 @@ export function StoryNav() {
         )
       : null
 
-    if (workshopJourney && isWorkshopJourneyPanel(sectionId)) {
+    if (
+      (workshopJourney?.dataset.workshopMode === 'desktop' ||
+        workshopJourney?.dataset.workshopMode === 'reduced') &&
+      isWorkshopJourneyPanel(sectionId)
+    ) {
       isProgrammaticScrollRef.current = true
       programmaticTargetRef.current = sectionId
       setActiveSection(sectionId)
@@ -279,6 +283,9 @@ export function StoryNav() {
             '[data-workshop-journey][data-workshop-mode]',
           )
         : null
+      const journeyIsHorizontal =
+        journey?.dataset.workshopMode === 'desktop' ||
+        journey?.dataset.workshopMode === 'reduced'
       const journeyViewport =
         journey?.querySelector<HTMLElement>('[data-workshop-viewport]') ?? null
       const journeyActiveRegion =
@@ -289,7 +296,7 @@ export function StoryNav() {
         journeyBounds.top <= activeLine &&
         journeyBounds.bottom > activeLine
 
-      if (journeyOwnsActiveLine && journey) {
+      if (journeyIsHorizontal && journeyOwnsActiveLine && journey) {
         const activePanel = journey.querySelector<HTMLElement>(
           '[data-workshop-panel][aria-hidden="false"]',
         )
@@ -314,9 +321,9 @@ export function StoryNav() {
         }
       }
 
-      const verticalSections = sections.filter(
-        (section) => !isWorkshopJourneyPanel(section.id),
-      )
+      const verticalSections = journeyIsHorizontal
+        ? sections.filter((section) => !isWorkshopJourneyPanel(section.id))
+        : sections
       if (verticalSections.length === 0) return
 
       const sectionPositions = verticalSections.map((section) => {
@@ -446,9 +453,12 @@ export function StoryNav() {
     if (normalizePathname(window.location.pathname) !== '/') return
 
     const sectionId = window.location.hash.slice(1)
+    const horizontalJourney = document.querySelector<HTMLElement>(
+      '[data-workshop-journey][data-workshop-mode="desktop"], [data-workshop-journey][data-workshop-mode="reduced"]',
+    )
     if (
       !sectionId ||
-      isWorkshopJourneyPanel(sectionId) ||
+      (horizontalJourney !== null && isWorkshopJourneyPanel(sectionId)) ||
       !homeNavigation.some((item) => item.id === sectionId)
     ) {
       return

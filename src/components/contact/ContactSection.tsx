@@ -62,36 +62,43 @@ export function ContactSection({ id, mode }: ContactSectionProps) {
     >
       <Container className="contact-section__layout">
         {mode === 'quote' ? (
-          <div className="contact-section__intro" data-reveal>
-            <WorkshopBusinessCard titleId={titleId} />
-          </div>
+          <>
+            <div className="contact-section__form" data-reveal>
+              <ContactForm mode={mode} />
+            </div>
+            <div className="contact-section__intro" data-reveal>
+              <WorkshopBusinessCard titleId={titleId} />
+            </div>
+          </>
         ) : (
-          <div className="contact-section__intro" data-reveal>
-            <p className="eyebrow">{content.eyebrow}</p>
-            <h2 id={titleId}>{content.title}</h2>
-            <div className="contact-section__description">
-              {content.description.map((paragraph) => (
-                <p key={paragraph}>{paragraph}</p>
-              ))}
-            </div>
-            <div className="contact-section__notes">
-              <h3>{content.notesTitle}</h3>
-              <ul>
-                {content.notes.map((note) => (
-                  <li key={note}>{note}</li>
+          <>
+            <div className="contact-section__intro" data-reveal>
+              <p className="eyebrow">{content.eyebrow}</p>
+              <h2 id={titleId}>{content.title}</h2>
+              <div className="contact-section__description">
+                {content.description.map((paragraph) => (
+                  <p key={paragraph}>{paragraph}</p>
                 ))}
-              </ul>
+              </div>
+              <div className="contact-section__notes">
+                <h3>{content.notesTitle}</h3>
+                <ul>
+                  {content.notes.map((note) => (
+                    <li key={note}>{note}</li>
+                  ))}
+                </ul>
+              </div>
+              <PlaceholderImage
+                {...placeholderImages.career.image}
+                className="contact-section__career-image"
+                ratio="landscape"
+              />
             </div>
-            <PlaceholderImage
-              {...placeholderImages.career.image}
-              className="contact-section__career-image"
-              ratio="landscape"
-            />
-          </div>
+            <div className="contact-section__form" data-reveal>
+              <ContactForm mode={mode} />
+            </div>
+          </>
         )}
-        <div data-reveal>
-          <ContactForm mode={mode} />
-        </div>
       </Container>
     </section>
   )
