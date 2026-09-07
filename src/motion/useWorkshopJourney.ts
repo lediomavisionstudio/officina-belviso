@@ -565,8 +565,8 @@ export function useWorkshopJourney(rootRef: RefObject<HTMLElement | null>) {
             }
           }
 
-          if (compact) {
-            journey.dataset.workshopMode = 'mobile'
+          if (compact && reduceMotion) {
+            journey.dataset.workshopMode = 'mobile-static'
             panels.forEach((panel) => {
               panel.removeAttribute('inert')
               panel.removeAttribute('aria-hidden')
@@ -576,6 +576,277 @@ export function useWorkshopJourney(rootRef: RefObject<HTMLElement | null>) {
             return () => {
               controller.abort()
               gsap.set([track, line, ...panels], { clearProps: 'all' })
+              panels.forEach((panel) => {
+                panel.removeAttribute('inert')
+                panel.removeAttribute('aria-hidden')
+              })
+              delete journey.dataset.workshopMode
+            }
+          }
+
+          if (compact) {
+            journey.dataset.workshopMode = 'mobile-narrative'
+            const sections = panels.map(
+              (panel) => panel.firstElementChild as HTMLElement,
+            )
+            let refreshFrame = 0
+            let measuredViewportWidth = viewport.clientWidth || window.innerWidth
+            let previousIndex = Math.max(
+              0,
+              WORKSHOP_JOURNEY_PANEL_IDS.indexOf(activeId),
+            )
+            let geometry = {
+              panelOffsets: [0, window.innerWidth, window.innerWidth * 2],
+              panelStarts: [0, window.innerWidth, window.innerWidth * 2],
+              totalDistance: window.innerWidth * 2,
+              transitionDistance: window.innerWidth,
+              verticalDistances: [0, 0, 0],
+            }
+
+            const measure = () => {
+              const viewportWidth = viewport.clientWidth || window.innerWidth
+              const panelOffsets = panels.map((panel) => panel.offsetLeft)
+              const horizontalDistance = Math.max(
+                0,
+                track.scrollWidth - viewportWidth,
+              )
+              const transitionDistance =
+                horizontalDistance / Math.max(1, panels.length - 1)
+              const verticalDistances = sections.map((section, index) =>
+                Math.max(
+                  0,
+                  section.scrollHeight -
+                    (panels[index].clientHeight || window.innerHeight),
+                ),
+              )
+              const panelStarts: number[] = []
+              let cursor = 0
+
+              panels.forEach((_, index) => {
+                panelStarts.push(cursor)
+                cursor += verticalDistances[index]
+                if (index < panels.length - 1) cursor += transitionDistance
+              })
+
+              geometry = {
+                panelOffsets,
+                panelStarts,
+                totalDistance: Math.max(1, cursor),
+                transitionDistance,
+                verticalDistances,
+              }
+              journey.style.setProperty(
+                '--workshop-scroll-distance',
+                String(geometry.totalDistance),
+              )
+            }
+
+            const render = (progress: number) => {
+              const distance = progress * geometry.totalDistance
+              let trackX = 0
+              let transitionIndex = -1
+              let transitionProgress = 0
+
+              sections.forEach((section, index) => {
+                const localDistance = distance - geometry.panelStarts[index]
+                const y = -Math.max(
+                  0,
+                  Math.min(geometry.verticalDistances[index], localDistance),
+                )
+                gsap.set(section, { force3D: true, y })
+              })
+
+              for (let index = 0; index < panels.length - 1; index += 1) {
+                const transitionStart =
+                  geometry.panelStarts[index] + geometry.verticalDistances[index]
+                const transitionEnd = geometry.panelStarts[index + 1]
+
+                if (distance >= transitionEnd) {
+                  trackX = -geometry.panelOffsets[index + 1]
+                  continue
+                }
+                if (distance >= transitionStart) {
+                  transitionIndex = index
+                  transitionProgress =
+                    (distance - transitionStart) /
+                    Math.max(1, geometry.transitionDistance)
+                  trackX = gsap.utils.interpolate(
+                    -geometry.panelOffsets[index],
+                    -geometry.panelOffsets[index + 1],
+                    transitionProgress,
+                  )
+                }
+                break
+              }
+
+              gsap.set(track, { force3D: true, x: trackX })
+              gsap.set(panels, { opacity: 1, scale: 1 })
+
+              if (transitionIndex >= 0) {
+                gsap.set(panels[transitionIndex], {
+                  opacity: 1 - transitionProgress * 0.14,
+                  scale: 1 - transitionProgress * 0.03,
+                })
+                gsap.set(panels[transitionIndex + 1], {
+                  opacity: 0.9 + transitionProgress * 0.1,
+                  scale:
+                    workshopJourneyConfig.panelEntryScale -
+                    transitionProgress *
+                      (workshopJourneyConfig.panelEntryScale - 1),
+                })
+              }
+
+              const activeIndex = geometry.panelStarts.reduce(
+                (currentIndex, panelStart, index) => {
+                  if (index === 0) return currentIndex
+                  const activationPoint =
+                    panelStart - geometry.transitionDistance * 0.5
+                  return distance >= activationPoint ? index : currentIndex
+                },
+                0,
+              )
+
+              if (activeIndex !== previousIndex) {
+                const direction: WorkshopJourneyDirection =
+                  activeIndex > previousIndex ? 'forward' : 'backward'
+                previousIndex = activeIndex
+                setPanelState(WORKSHOP_JOURNEY_PANEL_IDS[activeIndex], direction)
+              }
+
+              line.style.transform = `scaleX(${0.12 + progress * 0.88})`
+              if (WORKSHOP_JOURNEY_DEBUG && debug) {
+                debug.textContent = `panel: ${WORKSHOP_JOURNEY_PANEL_IDS[activeIndex]} · progress: ${progress.toFixed(3)} · track: ${Math.round(trackX)}px`
+              }
+            }
+
+            measure()
+            const trigger = ScrollTrigger.create({
+              end: 'bottom bottom',
+              invalidateOnRefresh: true,
+              markers: WORKSHOP_JOURNEY_DEBUG,
+              onEnter: () => gsap.set(line, { autoAlpha: 1 }),
+              onEnterBack: () => gsap.set(line, { autoAlpha: 1 }),
+              onLeave: () => gsap.set(line, { autoAlpha: 0 }),
+              onRefresh: (self) => render(self.progress),
+              onUpdate: (self) => render(self.progress),
+              start: 'top top',
+              trigger: journey,
+            })
+
+            const navigate = (event: Event) => {
+              const detail = (event as CustomEvent<WorkshopJourneyNavigateDetail>)
+                .detail
+              if (!detail || !isWorkshopJourneyPanel(detail.sectionId)) return
+              const index = WORKSHOP_JOURNEY_PANEL_IDS.indexOf(detail.sectionId)
+              const direction: WorkshopJourneyDirection =
+                index > previousIndex ? 'forward' : 'backward'
+              previousIndex = index
+              setPanelState(detail.sectionId, direction)
+              window.scrollTo({
+                behavior: detail.behavior ?? 'smooth',
+                top: trigger.start + geometry.panelStarts[index],
+              })
+            }
+
+            const handleHashChange = () => {
+              const sectionId = window.location.hash.slice(1)
+              if (!isWorkshopJourneyPanel(sectionId)) return
+              navigate(
+                new CustomEvent<WorkshopJourneyNavigateDetail>(
+                  WORKSHOP_JOURNEY_NAVIGATE_EVENT,
+                  { detail: { sectionId, behavior: 'smooth' } },
+                ),
+              )
+            }
+
+            const keydown = (event: KeyboardEvent) => {
+              if (
+                event.defaultPrevented ||
+                (event.target instanceof Element &&
+                  event.target.closest(interactiveSelector))
+              ) {
+                return
+              }
+              const forward = event.key === 'ArrowRight' || event.key === 'PageDown'
+              const backward = event.key === 'ArrowLeft' || event.key === 'PageUp'
+              if (!forward && !backward) return
+              const nextIndex = Math.max(
+                0,
+                Math.min(2, previousIndex + (forward ? 1 : -1)),
+              )
+              if (nextIndex === previousIndex) return
+              event.preventDefault()
+              navigate(
+                new CustomEvent<WorkshopJourneyNavigateDetail>(
+                  WORKSHOP_JOURNEY_NAVIGATE_EVENT,
+                  {
+                    detail: {
+                      sectionId: WORKSHOP_JOURNEY_PANEL_IDS[nextIndex],
+                      behavior: 'smooth',
+                    },
+                  },
+                ),
+              )
+            }
+
+            const requestRefresh = () => {
+              window.cancelAnimationFrame(refreshFrame)
+              refreshFrame = window.requestAnimationFrame(() => {
+                const nextViewportWidth = viewport.clientWidth || window.innerWidth
+                const preservePanel =
+                  Math.abs(nextViewportWidth - measuredViewportWidth) > 2
+                const preservedIndex = previousIndex
+                measure()
+                ScrollTrigger.refresh()
+                measuredViewportWidth = nextViewportWidth
+                if (preservePanel) {
+                  const direction: WorkshopJourneyDirection =
+                    preservedIndex > previousIndex ? 'forward' : 'backward'
+                  previousIndex = preservedIndex
+                  setPanelState(
+                    WORKSHOP_JOURNEY_PANEL_IDS[preservedIndex],
+                    direction,
+                  )
+                  window.scrollTo({
+                    behavior: 'auto',
+                    top: trigger.start + geometry.panelStarts[preservedIndex],
+                  })
+                }
+              })
+            }
+            const resizeObserver = new ResizeObserver(requestRefresh)
+            resizeObserver.observe(viewport)
+            sections.forEach((section) => resizeObserver.observe(section))
+            document.addEventListener(WORKSHOP_JOURNEY_NAVIGATE_EVENT, navigate)
+            window.addEventListener('keydown', keydown)
+            window.addEventListener('hashchange', handleHashChange)
+            initializePanelState()
+            render(0)
+
+            const initialIndex = WORKSHOP_JOURNEY_PANEL_IDS.indexOf(activeId)
+            if (initialIndex > 0) {
+              refreshFrame = window.requestAnimationFrame(() => {
+                measure()
+                ScrollTrigger.refresh()
+                window.scrollTo({
+                  behavior: 'auto',
+                  top: trigger.start + geometry.panelStarts[initialIndex],
+                })
+              })
+            }
+
+            return () => {
+              controller.abort()
+              resizeObserver.disconnect()
+              window.cancelAnimationFrame(refreshFrame)
+              document.removeEventListener(WORKSHOP_JOURNEY_NAVIGATE_EVENT, navigate)
+              window.removeEventListener('keydown', keydown)
+              window.removeEventListener('hashchange', handleHashChange)
+              trigger.kill()
+              journey.style.removeProperty('--workshop-scroll-distance')
+              gsap.set([track, line, ...panels, ...sections], {
+                clearProps: 'all',
+              })
               panels.forEach((panel) => {
                 panel.removeAttribute('inert')
                 panel.removeAttribute('aria-hidden')

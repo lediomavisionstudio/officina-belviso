@@ -87,6 +87,7 @@ export function StoryNav() {
 
     if (
       (workshopJourney?.dataset.workshopMode === 'desktop' ||
+        workshopJourney?.dataset.workshopMode === 'mobile-narrative' ||
         workshopJourney?.dataset.workshopMode === 'reduced') &&
       isWorkshopJourneyPanel(sectionId)
     ) {
@@ -121,6 +122,7 @@ export function StoryNav() {
       const targetReached = () => {
         const journeyAtViewport =
           workshopJourney.dataset.workshopMode === 'desktop' ||
+          workshopJourney.dataset.workshopMode === 'mobile-narrative' ||
           Math.abs(workshopJourney.getBoundingClientRect().top) <= 2
 
         return (
@@ -285,11 +287,15 @@ export function StoryNav() {
         : null
       const journeyIsHorizontal =
         journey?.dataset.workshopMode === 'desktop' ||
+        journey?.dataset.workshopMode === 'mobile-narrative' ||
         journey?.dataset.workshopMode === 'reduced'
       const journeyViewport =
         journey?.querySelector<HTMLElement>('[data-workshop-viewport]') ?? null
       const journeyActiveRegion =
-        journey?.dataset.workshopMode === 'desktop' ? journeyViewport : journey
+        journey?.dataset.workshopMode === 'desktop' ||
+        journey?.dataset.workshopMode === 'mobile-narrative'
+          ? journeyViewport
+          : journey
       const journeyBounds = journeyActiveRegion?.getBoundingClientRect()
       const journeyOwnsActiveLine =
         journeyBounds !== undefined &&
@@ -454,7 +460,7 @@ export function StoryNav() {
 
     const sectionId = window.location.hash.slice(1)
     const horizontalJourney = document.querySelector<HTMLElement>(
-      '[data-workshop-journey][data-workshop-mode="desktop"], [data-workshop-journey][data-workshop-mode="reduced"]',
+      '[data-workshop-journey][data-workshop-mode="desktop"], [data-workshop-journey][data-workshop-mode="mobile-narrative"], [data-workshop-journey][data-workshop-mode="reduced"]',
     )
     if (
       !sectionId ||

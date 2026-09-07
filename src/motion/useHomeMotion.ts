@@ -350,7 +350,6 @@ export function useHomeMotion(scope: RefObject<HTMLElement | null>) {
 
           const horizontalMotionActive =
             ENABLE_WORKSHOP_JOURNEY &&
-            !conditions.compact &&
             root.querySelector('[data-workshop-journey]') !== null
           const horizontalMotionController = horizontalMotionActive
             ? new AbortController()
