@@ -1,9 +1,8 @@
 import { aboutKpis } from '../../config/aboutKpis'
 import { ENABLE_GLOBAL_CINEMATIC_BACKGROUND } from '../../config/globalCinematicBackground'
-import { placeholderImages } from '../../config/placeholderImages'
 import { Container } from '../ui/Container'
+import { AboutImageCarousel } from './AboutImageCarousel'
 import { HomeSectionHeader } from './HomeSectionHeader'
-import { PlaceholderImage } from './PlaceholderImage'
 
 function formatKpiValue(value: number, decimals = 0, suffix = '') {
   return `${value.toFixed(decimals)}${suffix}`
@@ -62,13 +61,7 @@ function AboutStats() {
 }
 
 function AboutImage() {
-  return (
-    <PlaceholderImage
-      {...placeholderImages.about.image}
-      className="home-about__image"
-      ratio="portrait"
-    />
-  )
+  return <AboutImageCarousel />
 }
 
 export function HomeAbout() {
