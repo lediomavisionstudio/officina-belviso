@@ -24,10 +24,9 @@ export function WorkshopBusinessCard() {
   const { categories, enableExternalMedia } = useCookieConsent()
   const { contact, googleBusiness, googleMapsUrl, openingHours } = siteConfig
   const phoneHref = contact.phone ? `tel:${contact.phone.replace(/\D/g, '')}` : null
-  const googleMapsViewportCenter = '41.02790,16.96755'
   const googleMapsEmbedUrl = `https://www.google.com/maps?q=${encodeURIComponent(
     `${contact.companyName} ${contact.address.join(' ')}`,
-  )}&ll=${encodeURIComponent(googleMapsViewportCenter)}&z=16&output=embed`
+  )}&output=embed`
   const weekdayHours = openingHours[0]?.periods.join(' • ')
   const saturdayHours = openingHours
     .find(({ day }) => day === 'Sabato')
@@ -48,33 +47,33 @@ export function WorkshopBusinessCard() {
           <ContactIcon name="address" />
           <div>
             <h3 id="workshop-address-title" className="business-card__label">Indirizzo</h3>
-            <div className="business-map">
-              <div className="business-map__embed">
-                {categories.externalMedia ? (
-                  <iframe
-                    src={googleMapsEmbedUrl}
-                    title="Mappa di Officina Belviso"
-                    loading="eager"
-                    referrerPolicy="no-referrer-when-downgrade"
-                    allowFullScreen
-                  />
-                ) : (
-                  <div className="business-map__consent" role="region" aria-label="Google Maps disattivato">
-                    <p>
-                      Google Maps è disattivato finché non autorizzi i contenuti esterni.
-                    </p>
-                    <Button type="button" size="small" variant="outline" onClick={enableExternalMedia}>
-                      Consenti e mostra la mappa
-                    </Button>
-                  </div>
-                )}
-              </div>
-              {googleMapsUrl ? (
-                <ButtonLink href={googleMapsUrl} target="_blank" rel="noreferrer" size="small" variant="outline">
-                  Apri in Maps
-                </ButtonLink>
-              ) : null}
+          </div>
+          <div className="business-map">
+            <div className="business-map__embed">
+              {categories.externalMedia ? (
+                <iframe
+                  src={googleMapsEmbedUrl}
+                  title="Mappa di Officina Belviso"
+                  loading="eager"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  allowFullScreen
+                />
+              ) : (
+                <div className="business-map__consent" role="region" aria-label="Google Maps disattivato">
+                  <p>
+                    Google Maps è disattivato finché non autorizzi i contenuti esterni.
+                  </p>
+                  <Button type="button" size="small" variant="outline" onClick={enableExternalMedia}>
+                    Consenti e mostra la mappa
+                  </Button>
+                </div>
+              )}
             </div>
+            {googleMapsUrl ? (
+              <ButtonLink href={googleMapsUrl} target="_blank" rel="noreferrer" size="small" variant="outline">
+                Apri in Maps
+              </ButtonLink>
+            ) : null}
           </div>
         </section>
 

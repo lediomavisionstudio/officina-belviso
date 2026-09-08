@@ -1634,6 +1634,10 @@ section[id] {
   margin-top: var(--space-3);
 }
 
+.business-card__detail--address .business-map {
+  grid-column: 1 / -1;
+}
+
 .business-map__embed {
   height: clamp(220px, 19vw, 250px);
   overflow: hidden;
