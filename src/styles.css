@@ -1827,6 +1827,166 @@ section[id] {
   resize: vertical;
 }
 
+.form-phone__controls {
+  display: grid;
+  min-width: 0;
+  gap: 10px;
+  grid-template-columns: minmax(142px, 0.42fr) minmax(0, 1fr);
+}
+
+.form-phone__controls select,
+.form-phone__controls input {
+  min-width: 0;
+}
+
+.form-multiselect {
+  position: relative;
+}
+
+.form-multiselect__trigger {
+  display: flex;
+  width: 100%;
+  min-height: 52px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 13px 15px;
+  border: 1px solid var(--line-control);
+  border-radius: var(--radius-control);
+  color: var(--ink);
+  background: var(--field-background);
+  cursor: pointer;
+  font: inherit;
+  font-size: 1rem;
+  text-align: left;
+  transition:
+    border-color var(--duration-fast) var(--easing-standard),
+    background-color var(--duration-fast) var(--easing-standard),
+    box-shadow var(--duration-fast) var(--easing-standard);
+}
+
+.form-multiselect__trigger:hover {
+  border-color: rgb(23 24 25 / 58%);
+}
+
+.form-multiselect__trigger:focus-visible {
+  border-color: var(--red);
+  outline: 0;
+  background: var(--white);
+  box-shadow:
+    0 0 0 3px var(--color-focus-ring),
+    0 12px 28px rgb(23 24 25 / 8%);
+}
+
+.form-multiselect__placeholder {
+  color: var(--ink-soft);
+}
+
+.form-multiselect__chevron {
+  flex: 0 0 auto;
+  font-size: 1.1rem;
+  line-height: 1;
+  transition: transform var(--duration-fast) var(--easing-standard);
+}
+
+.form-multiselect__trigger[aria-expanded='true'] .form-multiselect__chevron {
+  transform: rotate(180deg);
+}
+
+.form-multiselect__chips {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.form-multiselect__chip {
+  display: inline-flex;
+  max-width: 100%;
+  min-height: 36px;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 7px 6px 12px;
+  border: 1px solid rgb(23 24 25 / 18%);
+  border-radius: var(--radius-pill);
+  color: var(--ink);
+  background: #f1f0eb;
+  font-size: 0.8rem;
+  font-weight: 620;
+  line-height: 1.3;
+}
+
+.form-multiselect__chip > button {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  flex: 0 0 auto;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  place-items: center;
+}
+
+.form-multiselect__chip > button:hover {
+  background: rgb(23 24 25 / 8%);
+}
+
+.form-multiselect__chip > button:focus-visible {
+  outline: 2px solid var(--red);
+  outline-offset: 2px;
+}
+
+.form-multiselect__menu {
+  position: absolute;
+  z-index: 8;
+  top: calc(100% + 8px);
+  right: 0;
+  left: 0;
+  display: grid;
+  max-height: 264px;
+  padding: 8px;
+  border: 1px solid var(--line-control);
+  border-radius: var(--radius-control);
+  overflow-y: auto;
+  background: var(--white);
+  box-shadow: var(--shadow-panel);
+}
+
+.form-multiselect__menu label {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 11px;
+  padding: 9px 10px;
+  border-radius: calc(var(--radius-control) - 4px);
+  color: var(--ink);
+  cursor: pointer;
+  font-size: 0.88rem;
+  font-weight: 580;
+}
+
+.form-multiselect__menu label:hover,
+.form-multiselect__menu label:has(input:checked) {
+  background: #f1f0eb;
+}
+
+.form-multiselect__menu label:has(input:focus-visible) {
+  outline: 2px solid var(--red);
+  outline-offset: -2px;
+}
+
+.form-multiselect__menu input {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  margin: 0;
+  accent-color: var(--red);
+}
+
 .form-field input:not([type='radio']):not([type='checkbox']):hover,
 .form-field select:hover,
 .form-field textarea:hover {
@@ -2723,6 +2883,10 @@ section[id] {
     grid-template-columns: 1fr;
   }
 
+  .form-phone__controls {
+    grid-template-columns: minmax(124px, 0.38fr) minmax(0, 1fr);
+  }
+
   .contact-form__footer {
     align-items: stretch;
     flex-direction: column;
@@ -2739,6 +2903,15 @@ section[id] {
 
   .form-radio-group__options label {
     width: 100%;
+  }
+
+  .form-phone__controls {
+    grid-template-columns: minmax(124px, 0.38fr) minmax(0, 1fr);
+  }
+
+  .form-multiselect__chip > button {
+    width: 32px;
+    height: 32px;
   }
 }
 

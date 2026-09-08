@@ -348,25 +348,28 @@ test.describe('Home V2', () => {
     await quote.locator('[name="firstName"]').fill('Mario')
     await quote.locator('[name="lastName"]').fill('Rossi')
     await quote.locator('[name="email"]').fill('email non valida')
-    await quote.locator('[name="phone"]').fill('abc')
-    await quote.locator('[name="vehicleBrand"]').selectOption('Volvo')
-    await quote.locator('[name="vehicleModel"]').fill('FH')
+    await expect(quote.locator('[name="phonePrefix"]')).toHaveValue('+39')
+    await quote.locator('[name="phoneNumber"]').fill('abc1234567890123')
+    await expect(quote.locator('[name="phoneNumber"]')).toHaveValue('1234567890')
+    await expect(quote.locator('[name="phone"]')).toHaveValue('+391234567890')
     await quote.locator('[name="registrationYear"]').fill('9999')
+    await quote.locator('[name="vin"]').fill('VIN DI PROVA')
     await quote.locator('[name="vehicleRunning"][value="yes"]').check()
-    await quote
-      .locator('[name="serviceType"]')
-      .selectOption('Impianto frenante')
+    await quote.locator('.form-multiselect__trigger').click()
+    await quote.getByRole('checkbox', { name: 'Impianto frenante' }).check()
+    await quote.getByRole('checkbox', { name: 'Diagnosi EBS/ABS' }).check()
+    await expect(quote.locator('[name="serviceType"]')).toHaveValue(
+      'Impianto frenante, Diagnosi EBS/ABS',
+    )
     await quote
       .locator('[name="problemDescription"]')
       .fill('Descrizione di prova del problema.')
     await quote.locator('[name="privacy"]').check()
     await quote.getByRole('button', { name: 'Conferma invio' }).click()
     await expect(quote.getByText('Inserisci un indirizzo email valido.')).toBeVisible()
-    await expect(quote.getByText('Inserisci un numero di telefono valido.')).toBeVisible()
     await expect(quote.getByText(/Inserisci un anno compreso tra 1900 e/)).toBeVisible()
 
     await quote.locator('[name="email"]').fill('mario@example.com')
-    await quote.locator('[name="phone"]').fill('+39 012 345 6789')
     await quote
       .locator('[name="registrationYear"]')
       .fill(String(new Date().getFullYear()))

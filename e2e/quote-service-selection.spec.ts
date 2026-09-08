@@ -46,12 +46,12 @@ async function expectQuoteSelection(
   service: (typeof serviceCases)[number],
 ) {
   const quote = page.locator('#richiedi-preventivo')
-  const serviceType = quote.locator('select[name="serviceType"]')
+  const serviceType = quote.locator('input[name="serviceType"]')
 
   await expect(page).toHaveURL(/#richiedi-preventivo$/)
   await expect(quote).toBeInViewport()
-  await expect(serviceType).toHaveValue(service.id)
-  await expect(serviceType.locator('option:checked')).toHaveText(service.label)
+  await expect(serviceType).toHaveValue(service.label)
+  await expect(quote.locator('.form-multiselect__chip')).toContainText(service.label)
   await expect(
     page.locator('.story-link[href="#richiedi-preventivo"]'),
   ).toHaveAttribute('aria-current', 'location')
@@ -106,18 +106,18 @@ test.describe('Service quote requests', () => {
       .getByRole('link', { name: 'Descrivi problema', exact: true })
       .click()
 
-    const serviceType = page
-      .locator('#richiedi-preventivo')
-      .locator('select[name="serviceType"]')
+    const quote = page.locator('#richiedi-preventivo')
+    const serviceType = quote.locator('input[name="serviceType"]')
     await expect(serviceType).toHaveValue('')
-    await serviceType.selectOption('diagnostics-ebs-abs')
-    await expect(serviceType).toHaveValue('diagnostics-ebs-abs')
+    await quote.locator('.form-multiselect__trigger').click()
+    await quote.getByRole('checkbox', { name: 'Diagnosi EBS/ABS' }).check()
+    await expect(serviceType).toHaveValue('Diagnosi EBS/ABS')
 
     await navigation.getByRole('link', { name: 'Servizi', exact: true }).click()
     await navigation
       .getByRole('link', { name: 'Descrivi problema', exact: true })
       .click()
-    await expect(serviceType).toHaveValue('diagnostics-ebs-abs')
+    await expect(serviceType).toHaveValue('Diagnosi EBS/ABS')
   })
 
   test('works with the mobile Journey without sticky or vertical misalignment', async ({

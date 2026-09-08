@@ -8,11 +8,14 @@ import {
   isQuoteServiceId,
   quoteServiceOptions,
 } from '../../config/services'
+import { phonePrefixOptions } from '../../config/phonePrefixes'
 import { useQuoteRequest } from '../../hooks/useQuoteRequest'
 import {
   Button,
   Checkbox,
   Input,
+  MultiSelect,
+  PhoneInput,
   RadioGroup,
   Select,
   Textarea,
@@ -42,10 +45,8 @@ const requiredByMode: Record<ContactFormMode, string[]> = {
   quote: [
     'firstName',
     'lastName',
-    'email',
-    'phone',
-    'vehicleBrand',
-    'vehicleModel',
+    'phoneNumber',
+    'vin',
     'vehicleRunning',
     'serviceType',
     'problemDescription',
@@ -59,12 +60,12 @@ const requiredMessage: Record<string, string> = {
   lastName: 'Inserisci il cognome.',
   email: 'Inserisci l’indirizzo email.',
   phone: 'Inserisci il numero di telefono.',
-  vehicleBrand: 'Seleziona la marca del veicolo.',
-  vehicleModel: 'Inserisci il modello del veicolo.',
+  phoneNumber: 'Inserisci un numero di telefono.',
+  vin: 'Inserisci il numero di telaio.',
   vehicleRunning: 'Indica se il veicolo è marciante.',
-  serviceType: 'Seleziona la tipologia di intervento.',
+  serviceType: 'Seleziona almeno una tipologia di intervento.',
   problemDescription: 'Descrivi il problema.',
-  privacy: 'È necessario accettare l’informativa privacy.',
+  privacy: 'Devi accettare l’informativa privacy.',
 }
 
 function valueOf(data: FormData, name: string) {
@@ -83,10 +84,17 @@ function validateForm(data: FormData, mode: ContactFormMode) {
     errors.email = 'Inserisci un indirizzo email valido.'
   }
 
-  const phone = valueOf(data, 'phone')
-  const phoneDigits = phone.replace(/\D/g, '')
-  if (phone && (!/^[+\d\s()./-]+$/.test(phone) || phoneDigits.length < 6)) {
-    errors.phone = 'Inserisci un numero di telefono valido.'
+  if (mode === 'quote') {
+    const phoneNumber = valueOf(data, 'phoneNumber')
+    if (phoneNumber && !/^\d{1,10}$/.test(phoneNumber)) {
+      errors.phoneNumber = 'Il numero può contenere al massimo 10 cifre.'
+    }
+  } else {
+    const phone = valueOf(data, 'phone')
+    const phoneDigits = phone.replace(/\D/g, '')
+    if (phone && (!/^[+\d\s()./-]+$/.test(phone) || phoneDigits.length < 6)) {
+      errors.phone = 'Inserisci un numero di telefono valido.'
+    }
   }
 
   const registrationYear = valueOf(data, 'registrationYear')
@@ -105,38 +113,52 @@ function validateForm(data: FormData, mode: ContactFormMode) {
 }
 
 export function ContactForm({ mode }: ContactFormProps) {
-  const { serviceType, setServiceType } = useQuoteRequest()
+  const { selectedInterventions, setSelectedInterventions } = useQuoteRequest()
   const formId = useId().replace(/:/g, '')
   const [errors, setErrors] = useState<FormErrors>({})
+  const [phonePrefix, setPhonePrefix] = useState(phonePrefixOptions[0])
+  const [phoneNumber, setPhoneNumber] = useState('')
   const [status, setStatus] = useState('')
   const id = (name: string) => `${formId}-${name}`
 
-  const clearFieldError = (event: ChangeEvent<HTMLFormElement>) => {
-    const fieldName = event.target.name
-    if (status) setStatus('')
-    if (!fieldName || !errors[fieldName]) return
-
+  const clearError = (fieldName: string) => {
     setErrors((current) => {
+      if (!current[fieldName]) return current
       const next = { ...current }
       delete next[fieldName]
       return next
     })
-    setStatus('')
+    if (status) setStatus('')
+  }
+
+  const clearFieldError = (event: ChangeEvent<HTMLFormElement>) => {
+    const fieldName = event.target.name
+    if (!fieldName) return
+    clearError(fieldName)
   }
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    const nextErrors = validateForm(new FormData(event.currentTarget), mode)
+    const formData = new FormData(event.currentTarget)
+    const nextErrors = validateForm(formData, mode)
     setErrors(nextErrors)
 
     const firstInvalidField = Object.keys(nextErrors)[0]
     if (firstInvalidField) {
       setStatus('Controlla i campi evidenziati e completa le informazioni richieste.')
-      const control = event.currentTarget.elements.namedItem(firstInvalidField)
-      if (control instanceof HTMLElement) control.focus()
-      else if (control instanceof RadioNodeList) {
-        const firstRadio = control[0]
-        if (firstRadio instanceof HTMLElement) firstRadio.focus()
+      const fieldRoot = event.currentTarget.querySelector<HTMLElement>(
+        `[data-form-field="${firstInvalidField}"]`,
+      )
+      const namedControl = event.currentTarget.elements.namedItem(firstInvalidField)
+      const control = fieldRoot?.querySelector<HTMLElement>('button, input, select, textarea')
+        ?? (namedControl instanceof HTMLElement ? namedControl : null)
+        ?? (namedControl instanceof RadioNodeList && namedControl[0] instanceof HTMLElement
+          ? namedControl[0]
+          : null)
+
+      if (control) {
+        control.focus({ preventScroll: true })
+        control.scrollIntoView({ behavior: 'smooth', block: 'center' })
       }
       return
     }
@@ -192,18 +214,46 @@ export function ContactForm({ mode }: ContactFormProps) {
           inputMode="email"
           autoComplete="email"
           error={errors.email}
-          required
+          required={mode === 'career'}
         />
-        <Input
-          id={id('phone')}
-          name="phone"
-          label="Telefono"
-          type="tel"
-          inputMode="tel"
-          autoComplete="tel"
-          error={errors.phone}
-          required
-        />
+        {mode === 'quote' ? (
+          <>
+            <input name="phonePrefix" type="hidden" value={phonePrefix.dialCode} />
+            <input name="phone" type="hidden" value={`${phonePrefix.dialCode}${phoneNumber}`} />
+            <PhoneInput
+              id={id('phoneNumber')}
+              prefixId={id('phonePrefixCountry')}
+              prefixName="phonePrefixCountry"
+              label="Telefono"
+              prefixOptions={phonePrefixOptions}
+              prefixValue={phonePrefix.value}
+              numberName="phoneNumber"
+              numberValue={phoneNumber}
+              onPrefixChange={(event) => {
+                const nextPrefix = phonePrefixOptions.find(
+                  (option) => option.value === event.currentTarget.value,
+                )
+                if (nextPrefix) setPhonePrefix(nextPrefix)
+              }}
+              onNumberChange={(event) => {
+                setPhoneNumber(event.currentTarget.value.replace(/\D/g, '').slice(0, 10))
+              }}
+              error={errors.phoneNumber}
+              required
+            />
+          </>
+        ) : (
+          <Input
+            id={id('phone')}
+            name="phone"
+            label="Telefono"
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel"
+            error={errors.phone}
+            required
+          />
+        )}
       </fieldset>
 
       {mode === 'quote' ? (
@@ -217,14 +267,12 @@ export function ContactForm({ mode }: ContactFormProps) {
               placeholder="Seleziona una marca"
               options={vehicleBrands}
               error={errors.vehicleBrand}
-              required
             />
             <Input
               id={id('vehicleModel')}
               name="vehicleModel"
               label="Modello del veicolo"
               error={errors.vehicleModel}
-              required
             />
             <Input
               id={id('registrationYear')}
@@ -235,7 +283,13 @@ export function ContactForm({ mode }: ContactFormProps) {
               maxLength={4}
               error={errors.registrationYear}
             />
-            <Input id={id('vin')} name="vin" label="Numero di telaio (VIN)" />
+            <Input
+              id={id('vin')}
+              name="vin"
+              label="Numero di telaio (VIN)"
+              error={errors.vin}
+              required
+            />
             <Input id={id('licensePlate')} name="licensePlate" label="Targa" />
             <RadioGroup
               id={id('vehicleRunning')}
@@ -252,19 +306,20 @@ export function ContactForm({ mode }: ContactFormProps) {
 
           <fieldset className="contact-form__group">
             <legend>Dettagli della richiesta</legend>
-            <Select
+            <MultiSelect
               className="form-field--full"
               id={id('serviceType')}
               name="serviceType"
               label="Tipologia di intervento"
-              placeholder="Seleziona un intervento"
+              placeholder="Seleziona uno o più interventi"
               options={quoteServiceOptions}
-              value={serviceType}
-              onChange={(event) => {
-                const nextValue = event.currentTarget.value
-                setServiceType(isQuoteServiceId(nextValue) ? nextValue : '')
+              value={selectedInterventions}
+              onChange={(nextValues) => {
+                const validValues = nextValues.filter(isQuoteServiceId)
+                setSelectedInterventions(validValues)
+                clearError('serviceType')
               }}
-              error={serviceType ? undefined : errors.serviceType}
+              error={selectedInterventions.length > 0 ? undefined : errors.serviceType}
               required
             />
             <Textarea

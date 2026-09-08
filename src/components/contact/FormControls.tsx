@@ -1,7 +1,13 @@
 import type {
+  ChangeEvent,
   InputHTMLAttributes,
   SelectHTMLAttributes,
   TextareaHTMLAttributes,
+} from 'react'
+import {
+  useEffect,
+  useRef,
+  useState,
 } from 'react'
 export { Button } from '../ui/Button'
 
@@ -147,6 +153,207 @@ export function Select({
           </option>
         ))}
       </select>
+      <FieldSupport id={id} helperText={helperText} error={error} />
+    </div>
+  )
+}
+
+type MultiSelectProps = FieldBaseProps & {
+  name: string
+  onChange: (value: string[]) => void
+  options: Array<{ label: string; value: string }>
+  placeholder: string
+  value: string[]
+}
+
+export function MultiSelect({
+  className = '',
+  error,
+  helperText,
+  id,
+  label,
+  name,
+  onChange,
+  options,
+  placeholder,
+  required,
+  value,
+}: MultiSelectProps & { className?: string }) {
+  const [isOpen, setIsOpen] = useState(false)
+  const rootRef = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const menuId = `${id}-menu`
+  const selectedOptions = options.filter((option) => value.includes(option.value))
+  const serializedValue = selectedOptions.map((option) => option.label).join(', ')
+
+  useEffect(() => {
+    if (!isOpen) return
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!rootRef.current?.contains(event.target as Node)) setIsOpen(false)
+    }
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return
+      setIsOpen(false)
+      triggerRef.current?.focus()
+    }
+
+    document.addEventListener('pointerdown', handlePointerDown)
+    document.addEventListener('keydown', handleEscape)
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown)
+      document.removeEventListener('keydown', handleEscape)
+    }
+  }, [isOpen])
+
+  const toggleOption = (optionValue: string) => {
+    onChange(
+      value.includes(optionValue)
+        ? value.filter((currentValue) => currentValue !== optionValue)
+        : [...value, optionValue],
+    )
+  }
+
+  return (
+    <div
+      className={`form-field form-multiselect ${className}`.trim()}
+      data-form-field={name}
+      ref={rootRef}
+    >
+      <label htmlFor={id} id={`${id}-label`}>
+        {label} {required ? <span aria-hidden="true">*</span> : null}
+      </label>
+      <input type="hidden" name={name} value={serializedValue} />
+      <button
+        aria-controls={menuId}
+        aria-describedby={descriptionIds(id, helperText, error)}
+        aria-expanded={isOpen}
+        aria-haspopup="dialog"
+        aria-invalid={error ? true : undefined}
+        aria-labelledby={`${id}-label ${id}-value`}
+        aria-required={required || undefined}
+        className="form-multiselect__trigger"
+        id={id}
+        onClick={() => setIsOpen((current) => !current)}
+        ref={triggerRef}
+        type="button"
+      >
+        <span
+          className={selectedOptions.length > 0 ? '' : 'form-multiselect__placeholder'}
+          id={`${id}-value`}
+        >
+          {selectedOptions.length > 0
+            ? `${selectedOptions.length} ${selectedOptions.length === 1 ? 'intervento selezionato' : 'interventi selezionati'}`
+            : placeholder}
+        </span>
+        <span aria-hidden="true" className="form-multiselect__chevron">⌄</span>
+      </button>
+
+      {selectedOptions.length > 0 ? (
+        <div className="form-multiselect__chips" aria-label="Interventi selezionati">
+          {selectedOptions.map((option) => (
+            <span className="form-multiselect__chip" key={option.value}>
+              {option.label}
+              <button
+                aria-label={`Rimuovi ${option.label}`}
+                onClick={() => toggleOption(option.value)}
+                type="button"
+              >
+                <span aria-hidden="true">×</span>
+              </button>
+            </span>
+          ))}
+        </div>
+      ) : null}
+
+      {isOpen ? (
+        <div
+          aria-labelledby={`${id}-label`}
+          className="form-multiselect__menu"
+          id={menuId}
+          role="group"
+        >
+          {options.map((option) => (
+            <label key={option.value}>
+              <input
+                checked={value.includes(option.value)}
+                onChange={() => toggleOption(option.value)}
+                type="checkbox"
+                value={option.value}
+              />
+              <span>{option.label}</span>
+            </label>
+          ))}
+        </div>
+      ) : null}
+      <FieldSupport id={id} helperText={helperText} error={error} />
+    </div>
+  )
+}
+
+type PhoneInputProps = FieldBaseProps & {
+  numberName: string
+  numberValue: string
+  onNumberChange: (event: ChangeEvent<HTMLInputElement>) => void
+  onPrefixChange: (event: ChangeEvent<HTMLSelectElement>) => void
+  prefixId: string
+  prefixName: string
+  prefixOptions: Array<{ label: string; value: string }>
+  prefixValue: string
+}
+
+export function PhoneInput({
+  error,
+  helperText,
+  id,
+  label,
+  numberName,
+  numberValue,
+  onNumberChange,
+  onPrefixChange,
+  prefixId,
+  prefixName,
+  prefixOptions,
+  prefixValue,
+  required,
+}: PhoneInputProps) {
+  return (
+    <div className="form-field form-phone" data-form-field={numberName}>
+      <label htmlFor={id}>
+        {label} {required ? <span aria-hidden="true">*</span> : null}
+      </label>
+      <div className="form-phone__controls">
+        <select
+          aria-label="Prefisso internazionale"
+          id={prefixId}
+          name={prefixName}
+          onChange={onPrefixChange}
+          value={prefixValue}
+        >
+          {prefixOptions.map((option) => (
+            <option key={`${option.label}-${option.value}`} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+        <input
+          aria-describedby={descriptionIds(id, helperText, error)}
+          aria-invalid={error ? true : undefined}
+          aria-required={required || undefined}
+          autoComplete="tel-national"
+          id={id}
+          inputMode="numeric"
+          maxLength={10}
+          name={numberName}
+          onChange={onNumberChange}
+          pattern="[0-9]*"
+          placeholder="3331234567"
+          required={required}
+          type="tel"
+          value={numberValue}
+        />
+      </div>
       <FieldSupport id={id} helperText={helperText} error={error} />
     </div>
   )

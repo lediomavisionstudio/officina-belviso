@@ -8,15 +8,15 @@ import type { QuoteServiceId, ServiceId } from '../../config/services'
 import { QuoteRequestContext } from '../../hooks/quoteRequestContext'
 
 export function QuoteRequestProvider({ children }: { children: ReactNode }) {
-  const [serviceType, setServiceType] = useState<QuoteServiceId | ''>('')
+  const [selectedInterventions, setSelectedInterventions] = useState<QuoteServiceId[]>([])
 
   const requestQuoteForService = useCallback((serviceId: ServiceId) => {
-    setServiceType(serviceId)
+    setSelectedInterventions([serviceId])
   }, [])
 
   const value = useMemo(
-    () => ({ requestQuoteForService, serviceType, setServiceType }),
-    [requestQuoteForService, serviceType],
+    () => ({ requestQuoteForService, selectedInterventions, setSelectedInterventions }),
+    [requestQuoteForService, selectedInterventions],
   )
 
   return (

@@ -3,8 +3,8 @@ import type { QuoteServiceId, ServiceId } from '../config/services'
 
 export type QuoteRequestContextValue = {
   requestQuoteForService: (serviceId: ServiceId) => void
-  serviceType: QuoteServiceId | ''
-  setServiceType: (serviceId: QuoteServiceId | '') => void
+  selectedInterventions: QuoteServiceId[]
+  setSelectedInterventions: (serviceIds: QuoteServiceId[]) => void
 }
 
 export const QuoteRequestContext =
