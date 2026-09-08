@@ -36,6 +36,9 @@ export function HomeHero() {
             <ButtonLink href="#richiedi-preventivo" variant="secondary">
               Descrivi problema
             </ButtonLink>
+            <ButtonLink href="#officina-info" variant="secondary">
+              Orari e contatti
+            </ButtonLink>
           </div>
         </div>
       </Container>

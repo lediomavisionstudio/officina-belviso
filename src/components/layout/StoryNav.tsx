@@ -9,10 +9,11 @@ import {
   type WorkshopJourneyNavigateDetail,
 } from '../../config/workshopJourney'
 import {
+  getNavigationSectionId,
   homeNavigation,
-  isHomeSectionId,
+  isHomeScrollTargetId,
   NAV_ACTIVE_DEBUG,
-  type HomeSectionId,
+  type HomeScrollTargetId,
 } from '../../constants/navigation'
 import { isServiceId } from '../../config/services'
 import { useQuoteRequest } from '../../hooks/useQuoteRequest'
@@ -59,9 +60,9 @@ export function StoryNav() {
   const [isOpen, setIsOpen] = useState(false)
   const [activeSection, setActiveSection] = useState(() => {
     if (normalizePathname(window.location.pathname) !== '/') return ''
-    const hashSection = window.location.hash.slice(1)
-    return homeNavigation.some((item) => item.id === hashSection)
-      ? hashSection
+    const hashTarget = window.location.hash.slice(1)
+    return isHomeScrollTargetId(hashTarget)
+      ? getNavigationSectionId(hashTarget)
       : 'home'
   })
   const menuId = useId()
@@ -74,7 +75,7 @@ export function StoryNav() {
   useNavigationMotion(navigationRef, activeSection, isOpen)
 
   const startProgrammaticScroll = useCallback((
-    sectionId: HomeSectionId,
+    sectionId: HomeScrollTargetId,
     behavior: ScrollBehavior = 'smooth',
   ) => {
     cleanupProgrammaticScrollRef.current?.()
@@ -207,7 +208,7 @@ export function StoryNav() {
 
     isProgrammaticScrollRef.current = true
     programmaticTargetRef.current = sectionId
-    setActiveSection(sectionId)
+    setActiveSection(getNavigationSectionId(sectionId))
 
     let animationFrame = 0
     let stableFrames = 0
@@ -289,7 +290,7 @@ export function StoryNav() {
 
   const navigateToSection = useCallback(
     (
-      sectionId: HomeSectionId,
+      sectionId: HomeScrollTargetId,
       behavior: ScrollBehavior = 'smooth',
     ) => {
       const navigationStarted = startProgrammaticScroll(sectionId, behavior)
@@ -475,7 +476,7 @@ export function StoryNav() {
       const anchor = event.target.closest<HTMLAnchorElement>('a[href^="#"]')
       const sectionId = anchor?.hash.slice(1)
 
-      if (!anchor || !isHomeSectionId(sectionId)) return
+      if (!anchor || !isHomeScrollTargetId(sectionId)) return
 
       const requestedServiceId = anchor.dataset.quoteServiceId
       if (isServiceId(requestedServiceId)) {
@@ -517,7 +518,7 @@ export function StoryNav() {
     if (
       !sectionId ||
       (horizontalJourney !== null && isWorkshopJourneyPanel(sectionId)) ||
-      !homeNavigation.some((item) => item.id === sectionId)
+      !isHomeScrollTargetId(sectionId)
     ) {
       return
     }
@@ -542,7 +543,7 @@ export function StoryNav() {
         })
         isProgrammaticScrollRef.current = false
         programmaticTargetRef.current = null
-        setActiveSection(sectionId)
+        setActiveSection(getNavigationSectionId(sectionId))
       })
     })
 

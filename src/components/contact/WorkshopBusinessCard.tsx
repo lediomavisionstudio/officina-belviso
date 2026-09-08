@@ -36,7 +36,7 @@ export function WorkshopBusinessCard() {
     ?.periods.join(' • ')
 
   return (
-    <article className="business-card">
+    <article className="business-card" id="officina-info">
       <header className="business-card__header">
         <p className="eyebrow">Informazioni officina</p>
         <p>Tutto ciò che serve per contattarci e raggiungerci.</p>
