@@ -14,7 +14,7 @@ export const siteConfig = {
   contact: {
     companyName: 'Officina Belviso S.N.C.',
     address: [
-      'Viale Sindaco Gerardo De Caro 9-11',
+      'Viale Sindaco Gerardo De Caro 9/11, Zona P.I.P.',
       '70016 Noicattaro (BA)',
     ],
     phone: '080 4783792',
@@ -63,5 +63,5 @@ export const siteConfig = {
     ],
   },
   googleMapsUrl:
-    'https://www.google.com/maps/search/?api=1&query=Officina%20Belviso%20S.N.C.%20Viale%20Sindaco%20Gerardo%20De%20Caro%209-11%2070016%20Noicattaro%20BA',
+    'https://www.google.com/maps/search/?api=1&query=Officina%20Belviso%20S.N.C.%20Viale%20Sindaco%20Gerardo%20De%20Caro%209%2F11%2C%20Zona%20P.I.P.%2070016%20Noicattaro%20BA',
 } satisfies SiteConfig
