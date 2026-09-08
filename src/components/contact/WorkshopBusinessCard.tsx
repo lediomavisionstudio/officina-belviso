@@ -24,9 +24,10 @@ export function WorkshopBusinessCard() {
   const { categories, enableExternalMedia } = useCookieConsent()
   const { contact, googleBusiness, googleMapsUrl, openingHours } = siteConfig
   const phoneHref = contact.phone ? `tel:${contact.phone.replace(/\D/g, '')}` : null
+  const googleMapsViewportCenter = '41.02790,16.96755'
   const googleMapsEmbedUrl = `https://www.google.com/maps?q=${encodeURIComponent(
     `${contact.companyName} ${contact.address.join(' ')}`,
-  )}&output=embed`
+  )}&ll=${encodeURIComponent(googleMapsViewportCenter)}&z=16&output=embed`
   const weekdayHours = openingHours[0]?.periods.join(' • ')
   const saturdayHours = openingHours
     .find(({ day }) => day === 'Sabato')
