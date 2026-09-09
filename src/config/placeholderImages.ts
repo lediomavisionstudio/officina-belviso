@@ -83,7 +83,14 @@ export const placeholderImages = {
       },
       sourceUrl: '/assets/works/sistemi-frenanti.png',
     },
-    pexelsPhoto(8985910, 'https://www.pexels.com/photo/set-of-tools-in-a-workshop-8985910/', 'Utensili professionali preparati per un intervento di precisione', '50% 58%'),
+    {
+      image: {
+        alt: 'Modulo di controllo per impianti pneumatici di veicoli industriali',
+        objectPosition: '50% 18%',
+        src: '/assets/works/impianti-pneumatici.png',
+      },
+      sourceUrl: '/assets/works/impianti-pneumatici.png',
+    },
     pexelsPhoto(8985603, 'https://www.pexels.com/photo/mechanic-removing-a-tire-8985603/', 'Tecnico durante un intervento su ruota e sospensioni', '50% 48%'),
     {
       image: {
