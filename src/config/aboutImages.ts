@@ -1,6 +1,6 @@
 export type AboutImage = {
   alt: string
-  id: 'nonno' | 'targhetta' | 'selfie' | 'furgone'
+  id: 'nonno' | 'targhetta' | 'selfie' | 'squadra' | 'furgone'
   label: string
   objectPosition: string
   src: string
@@ -29,6 +29,13 @@ export const aboutImages: readonly AboutImage[] = [
     src: '/assets/about/chi-siamo-selfie.png',
     alt: 'Il team di Officina Belviso davanti al furgone aziendale',
     objectPosition: '50% 48%',
+  },
+  {
+    id: 'squadra',
+    label: 'Squadra',
+    src: '/assets/about/chi-siamo-squadra.png',
+    alt: 'Il team di Officina Belviso all’interno dell’officina',
+    objectPosition: '50% 50%',
   },
   {
     id: 'furgone',
