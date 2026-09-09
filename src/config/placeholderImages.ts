@@ -79,7 +79,13 @@ export const placeholderImages = {
     pexelsPhoto(7541360, 'https://www.pexels.com/photo/person-fixing-a-truck-7541360/', 'Intervento professionale sul motore di un camion industriale', '72% center'),
     pexelsPhoto(8985910, 'https://www.pexels.com/photo/set-of-tools-in-a-workshop-8985910/', 'Utensili professionali preparati per un intervento di precisione', '50% 58%'),
     pexelsPhoto(8985603, 'https://www.pexels.com/photo/mechanic-removing-a-tire-8985603/', 'Tecnico durante un intervento su ruota e sospensioni', '50% 48%'),
-    pexelsPhoto(12203657, 'https://www.pexels.com/photo/men-beside-a-truck-12203657/', 'Tecnici impegnati nella manutenzione di un camion'),
+    {
+      image: {
+        alt: 'Tecnico di Officina Belviso durante un intervento di manutenzione programmata',
+        src: '/assets/works/manutenzione-programmata.png',
+      },
+      sourceUrl: '/assets/works/manutenzione-programmata.png',
+    },
   ],
   career: pexelsPhoto(
     7018506,
