@@ -76,7 +76,13 @@ export const placeholderImages = {
   ],
   works: [
     pexelsPhoto(7006667, 'https://www.pexels.com/photo/a-person-fixing-a-truck-7006667/', 'Camion rosso durante un intervento tecnico in officina'),
-    pexelsPhoto(7541360, 'https://www.pexels.com/photo/person-fixing-a-truck-7541360/', 'Intervento professionale sul motore di un camion industriale', '72% center'),
+    {
+      image: {
+        alt: 'Impianti frenanti di un veicolo industriale durante un intervento in officina',
+        src: '/assets/works/sistemi-frenanti.png',
+      },
+      sourceUrl: '/assets/works/sistemi-frenanti.png',
+    },
     pexelsPhoto(8985910, 'https://www.pexels.com/photo/set-of-tools-in-a-workshop-8985910/', 'Utensili professionali preparati per un intervento di precisione', '50% 58%'),
     pexelsPhoto(8985603, 'https://www.pexels.com/photo/mechanic-removing-a-tire-8985603/', 'Tecnico durante un intervento su ruota e sospensioni', '50% 48%'),
     {
