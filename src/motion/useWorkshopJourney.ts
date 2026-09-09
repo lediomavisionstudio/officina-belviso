@@ -611,21 +611,6 @@ export function useWorkshopJourney(rootRef: RefObject<HTMLElement | null>) {
               transitionDistance: window.innerWidth,
               verticalDistances: [0, 0, 0],
             }
-            const setSectionY = sections.map((section) =>
-              gsap.quickSetter(section, 'y', 'px'),
-            )
-            const setTrackX = gsap.quickSetter(track, 'x', 'px')
-            const setPanelOpacity = panels.map((panel) =>
-              gsap.quickSetter(panel, 'opacity'),
-            )
-            const setPanelScale = panels.map((panel) =>
-              gsap.quickSetter(panel, 'scale'),
-            )
-            const previousSectionY = sections.map(() => Number.NaN)
-            const previousPanelOpacity = panels.map(() => Number.NaN)
-            const previousPanelScale = panels.map(() => Number.NaN)
-            let previousTrackX = Number.NaN
-            gsap.set([track, ...sections], { force3D: true })
 
             const measure = () => {
               const viewportWidth = viewport.clientWidth || window.innerWidth
@@ -666,22 +651,18 @@ export function useWorkshopJourney(rootRef: RefObject<HTMLElement | null>) {
             }
 
             const render = (progress: number) => {
-              const clampedProgress = gsap.utils.clamp(0, 1, progress)
-              const distance = clampedProgress * geometry.totalDistance
+              const distance = progress * geometry.totalDistance
               let trackX = 0
               let transitionIndex = -1
               let transitionProgress = 0
 
-              sections.forEach((_, index) => {
+              sections.forEach((section, index) => {
                 const localDistance = distance - geometry.panelStarts[index]
                 const y = -Math.max(
                   0,
                   Math.min(geometry.verticalDistances[index], localDistance),
                 )
-                if (y !== previousSectionY[index]) {
-                  previousSectionY[index] = y
-                  setSectionY[index](y)
-                }
+                gsap.set(section, { force3D: true, y })
               })
 
               for (let index = 0; index < panels.length - 1; index += 1) {
@@ -707,37 +688,22 @@ export function useWorkshopJourney(rootRef: RefObject<HTMLElement | null>) {
                 break
               }
 
-              if (trackX !== previousTrackX) {
-                previousTrackX = trackX
-                setTrackX(trackX)
-              }
-
-              const nextPanelOpacity = panels.map(() => 1)
-              const nextPanelScale = panels.map(() => 1)
+              gsap.set(track, { force3D: true, x: trackX })
+              gsap.set(panels, { opacity: 1, scale: 1 })
 
               if (transitionIndex >= 0) {
-                nextPanelOpacity[transitionIndex] =
-                  1 - transitionProgress * 0.14
-                nextPanelScale[transitionIndex] =
-                  1 - transitionProgress * 0.03
-                nextPanelOpacity[transitionIndex + 1] =
-                  0.9 + transitionProgress * 0.1
-                nextPanelScale[transitionIndex + 1] =
-                  workshopJourneyConfig.panelEntryScale -
+                gsap.set(panels[transitionIndex], {
+                  opacity: 1 - transitionProgress * 0.14,
+                  scale: 1 - transitionProgress * 0.03,
+                })
+                gsap.set(panels[transitionIndex + 1], {
+                  opacity: 0.9 + transitionProgress * 0.1,
+                  scale:
+                    workshopJourneyConfig.panelEntryScale -
                     transitionProgress *
-                      (workshopJourneyConfig.panelEntryScale - 1)
+                      (workshopJourneyConfig.panelEntryScale - 1),
+                })
               }
-
-              panels.forEach((_, index) => {
-                if (nextPanelOpacity[index] !== previousPanelOpacity[index]) {
-                  previousPanelOpacity[index] = nextPanelOpacity[index]
-                  setPanelOpacity[index](nextPanelOpacity[index])
-                }
-                if (nextPanelScale[index] !== previousPanelScale[index]) {
-                  previousPanelScale[index] = nextPanelScale[index]
-                  setPanelScale[index](nextPanelScale[index])
-                }
-              })
 
               const activeIndex = geometry.panelStarts.reduce(
                 (currentIndex, panelStart, index) => {
@@ -756,9 +722,9 @@ export function useWorkshopJourney(rootRef: RefObject<HTMLElement | null>) {
                 setPanelState(WORKSHOP_JOURNEY_PANEL_IDS[activeIndex], direction)
               }
 
-              line.style.transform = `scaleX(${0.12 + clampedProgress * 0.88})`
+              line.style.transform = `scaleX(${0.12 + progress * 0.88})`
               if (WORKSHOP_JOURNEY_DEBUG && debug) {
-                debug.textContent = `panel: ${WORKSHOP_JOURNEY_PANEL_IDS[activeIndex]} · progress: ${clampedProgress.toFixed(3)} · track: ${Math.round(trackX)}px`
+                debug.textContent = `panel: ${WORKSHOP_JOURNEY_PANEL_IDS[activeIndex]} · progress: ${progress.toFixed(3)} · track: ${Math.round(trackX)}px`
               }
             }
 
@@ -920,11 +886,17 @@ export function useWorkshopJourney(rootRef: RefObject<HTMLElement | null>) {
               requestRefresh(true)
             }
             const refreshAfterLoad = () => requestRefresh(true)
+            const refreshAfterViewportResize = () => requestRefresh(true)
             window.addEventListener('resize', preservePanelAndRefresh, {
               passive: true,
             })
             window.addEventListener('orientationchange', refreshAfterOrientation)
             window.addEventListener('load', refreshAfterLoad, { once: true })
+            window.visualViewport?.addEventListener(
+              'resize',
+              refreshAfterViewportResize,
+              { passive: true },
+            )
             void document.fonts?.ready.then(() => {
               if (!controller.signal.aborted) requestRefresh(true)
             })
@@ -958,6 +930,10 @@ export function useWorkshopJourney(rootRef: RefObject<HTMLElement | null>) {
                 refreshAfterOrientation,
               )
               window.removeEventListener('load', refreshAfterLoad)
+              window.visualViewport?.removeEventListener(
+                'resize',
+                refreshAfterViewportResize,
+              )
               document.removeEventListener(WORKSHOP_JOURNEY_NAVIGATE_EVENT, navigate)
               window.removeEventListener('keydown', keydown)
               window.removeEventListener('hashchange', handleHashChange)

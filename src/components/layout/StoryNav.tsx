@@ -320,51 +320,28 @@ export function StoryNav() {
 
   useEffect(() => {
     let activeSectionFrame = 0
-    let measuredViewportWidth = window.innerWidth
-    const sections = Array.from(
-      document.querySelectorAll<HTMLElement>('section[id]'),
-    ).filter((section) => homeNavigation.some((item) => item.id === section.id))
-    const journey = ENABLE_WORKSHOP_JOURNEY
-      ? document.querySelector<HTMLElement>(
-          '[data-workshop-journey][data-workshop-mode]',
-        )
-      : null
-    const journeyIsHorizontal =
-      journey?.dataset.workshopMode === 'desktop' ||
-      journey?.dataset.workshopMode === 'mobile-narrative' ||
-      journey?.dataset.workshopMode === 'reduced'
-    let journeyScrollRange: { end: number; start: number } | null = null
-
-    const measureJourneyScrollRange = () => {
-      if (!journey || !journeyIsHorizontal) {
-        journeyScrollRange = null
-        return
-      }
-
-      const start = journey.offsetTop
-      journeyScrollRange = {
-        start,
-        end: start + journey.offsetHeight - window.innerHeight,
-      }
-    }
-
-    measureJourneyScrollRange()
 
     const updateActiveSection = () => {
       if (isProgrammaticScrollRef.current) return
 
+      const sections = Array.from(
+        document.querySelectorAll<HTMLElement>('section[id]'),
+      ).filter((section) => homeNavigation.some((item) => item.id === section.id))
+
       if (sections.length === 0) return
-      if (
-        journeyScrollRange &&
-        window.scrollY >= journeyScrollRange.start - 1 &&
-        window.scrollY <= journeyScrollRange.end + 1
-      ) {
-        return
-      }
 
       const navbarHeight =
         Number.parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0
       const activeLine = Math.max(navbarHeight + 1, window.innerHeight * 0.4)
+      const journey = ENABLE_WORKSHOP_JOURNEY
+        ? document.querySelector<HTMLElement>(
+            '[data-workshop-journey][data-workshop-mode]',
+          )
+        : null
+      const journeyIsHorizontal =
+        journey?.dataset.workshopMode === 'desktop' ||
+        journey?.dataset.workshopMode === 'mobile-narrative' ||
+        journey?.dataset.workshopMode === 'reduced'
       const journeyViewport =
         journey?.querySelector<HTMLElement>('[data-workshop-viewport]') ?? null
       const journeyActiveRegion =
@@ -451,40 +428,20 @@ export function StoryNav() {
 
     const scheduleActiveSectionUpdate = () => {
       if (isProgrammaticScrollRef.current) return
-      if (
-        journeyScrollRange &&
-        window.scrollY >= journeyScrollRange.start - 1 &&
-        window.scrollY <= journeyScrollRange.end + 1
-      ) {
-        return
-      }
 
       window.cancelAnimationFrame(activeSectionFrame)
       activeSectionFrame = window.requestAnimationFrame(updateActiveSection)
     }
-    const handleResize = () => {
-      const nextViewportWidth = window.innerWidth
-      if (Math.abs(nextViewportWidth - measuredViewportWidth) <= 2) return
-
-      measuredViewportWidth = nextViewportWidth
-      measureJourneyScrollRange()
-      scheduleActiveSectionUpdate()
-    }
-    const journeyResizeObserver = journey
-      ? new ResizeObserver(measureJourneyScrollRange)
-      : null
-    if (journey && journeyResizeObserver) journeyResizeObserver.observe(journey)
 
     updateActiveSectionRef.current = updateActiveSection
     window.addEventListener('scroll', scheduleActiveSectionUpdate, { passive: true })
-    window.addEventListener('resize', handleResize, { passive: true })
+    window.addEventListener('resize', scheduleActiveSectionUpdate)
     updateActiveSection()
 
     return () => {
       window.cancelAnimationFrame(activeSectionFrame)
-      journeyResizeObserver?.disconnect()
       window.removeEventListener('scroll', scheduleActiveSectionUpdate)
-      window.removeEventListener('resize', handleResize)
+      window.removeEventListener('resize', scheduleActiveSectionUpdate)
       updateActiveSectionRef.current = () => undefined
     }
   }, [])

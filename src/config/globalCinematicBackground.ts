@@ -2,7 +2,6 @@ export const ENABLE_GLOBAL_CINEMATIC_BACKGROUND = true
 
 export const globalCinematicBackgroundConfig = {
   image: {
-    mobileSrc: '/assets/officina-belviso-workshop.jpg',
     src: '/assets/officina-belviso-workshop.png',
   },
   desktop: {

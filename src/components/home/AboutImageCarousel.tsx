@@ -37,22 +37,19 @@ export function AboutImageCarousel() {
           const isActive = index === activeIndex
 
           return (
-            <picture key={image.id}>
-              <source media="(max-width: 960px)" srcSet={image.mobileSrc} />
-              <img
-                className="about-image-carousel__slide"
-                src={image.src}
-                alt={isActive ? image.alt : ''}
-                aria-hidden={!isActive}
-                loading={index === 0 ? 'eager' : 'lazy'}
-                decoding="async"
-                fetchPriority={index === 0 ? 'high' : 'auto'}
-                style={{ objectPosition: image.objectPosition }}
-                data-placeholder-photo
-                data-about-slide={image.id}
-                data-active={isActive ? 'true' : 'false'}
-              />
-            </picture>
+            <img
+              className="about-image-carousel__slide"
+              src={image.src}
+              alt={isActive ? image.alt : ''}
+              aria-hidden={!isActive}
+              loading={index === 0 ? 'eager' : 'lazy'}
+              decoding="async"
+              fetchPriority={index === 0 ? 'high' : 'auto'}
+              style={{ objectPosition: image.objectPosition }}
+              data-placeholder-photo
+              data-about-slide={image.id}
+              data-active={isActive ? 'true' : 'false'}
+            />
           )
         })}
         <span className="placeholder-image__reveal-cover" aria-hidden="true" />
