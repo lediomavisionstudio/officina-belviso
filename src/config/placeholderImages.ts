@@ -65,7 +65,14 @@ export const placeholderImages = {
     pexelsPhoto(7564861, 'https://www.pexels.com/photo/mechanic-repairing-a-truck-engine-7564861/', 'Meccanico impegnato nella riparazione del motore di un camion', '50% 42%'),
     pexelsPhoto(7564860, 'https://www.pexels.com/photo/car-mechanic-at-work-7564860/', 'Tecnico al lavoro sui sistemi meccanici di un veicolo industriale', '58% 62%'),
     pexelsPhoto(6720515, 'https://www.pexels.com/photo/a-man-holding-a-tire-6720515/', 'Tecnico durante la manutenzione di una ruota per veicoli pesanti', '50% 45%'),
-    pexelsPhoto(33814735, 'https://www.pexels.com/photo/mechanic-working-on-car-in-auto-workshop-33814735/', 'Officina moderna attrezzata per interventi di manutenzione', '35% center'),
+    {
+      image: {
+        alt: 'Veicolo industriale presso la sede di Officina Belviso',
+        objectPosition: '50% 41%',
+        src: '/assets/services/manutenzione-veicoli-industriali.png',
+      },
+      sourceUrl: '/assets/services/manutenzione-veicoli-industriali.png',
+    },
   ],
   works: [
     pexelsPhoto(7006667, 'https://www.pexels.com/photo/a-person-fixing-a-truck-7006667/', 'Camion rosso durante un intervento tecnico in officina'),
