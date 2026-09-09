@@ -2,6 +2,7 @@ export type PlaceholderPhoto = {
   image: {
     alt: string
     objectPosition?: string
+    mobileSrc?: string
     src: string
     srcSet?: string
   }
@@ -42,6 +43,7 @@ export const placeholderImages = {
   hero: {
     image: {
       alt: 'Tecnico al lavoro sull\u2019impianto di un veicolo industriale',
+      mobileSrc: '/assets/home-hero-officina-panoramica.jpg?v=1',
       src: '/assets/home-hero-officina-panoramica.png?v=1',
     },
     sourceUrl: '/assets/home-hero-officina-panoramica.png',
@@ -57,6 +59,7 @@ export const placeholderImages = {
       image: {
         alt: 'Tecnico di Officina Belviso durante un intervento sull’impianto frenante',
         objectPosition: '50% 32%',
+        mobileSrc: '/assets/services/impianto-frenante.jpg',
         src: '/assets/services/impianto-frenante.png',
       },
       sourceUrl: '/assets/services/impianto-frenante.png',
@@ -69,6 +72,7 @@ export const placeholderImages = {
       image: {
         alt: 'Veicolo industriale presso la sede di Officina Belviso',
         objectPosition: '50% 41%',
+        mobileSrc: '/assets/services/manutenzione-veicoli-industriali.jpg',
         src: '/assets/services/manutenzione-veicoli-industriali.png',
       },
       sourceUrl: '/assets/services/manutenzione-veicoli-industriali.png',
@@ -79,6 +83,7 @@ export const placeholderImages = {
     {
       image: {
         alt: 'Impianti frenanti di un veicolo industriale durante un intervento in officina',
+        mobileSrc: '/assets/works/sistemi-frenanti.jpg',
         src: '/assets/works/sistemi-frenanti.png',
       },
       sourceUrl: '/assets/works/sistemi-frenanti.png',
@@ -87,6 +92,7 @@ export const placeholderImages = {
       image: {
         alt: 'Modulo di controllo per impianti pneumatici di veicoli industriali',
         objectPosition: '50% 18%',
+        mobileSrc: '/assets/works/impianti-pneumatici.jpg',
         src: '/assets/works/impianti-pneumatici.png',
       },
       sourceUrl: '/assets/works/impianti-pneumatici.png',
@@ -95,6 +101,7 @@ export const placeholderImages = {
     {
       image: {
         alt: 'Tecnico di Officina Belviso durante un intervento di manutenzione programmata',
+        mobileSrc: '/assets/works/manutenzione-programmata.jpg',
         src: '/assets/works/manutenzione-programmata.png',
       },
       sourceUrl: '/assets/works/manutenzione-programmata.png',

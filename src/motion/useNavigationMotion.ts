@@ -116,6 +116,7 @@ export function useNavigationMotion(
     let animationFrame = 0
     let isCompact = false
     const updateCompactState = () => {
+      animationFrame = 0
       const nextCompact = window.scrollY > 56
       if (nextCompact !== isCompact) {
         isCompact = nextCompact
@@ -124,7 +125,9 @@ export function useNavigationMotion(
       }
     }
     const scheduleUpdate = () => {
-      window.cancelAnimationFrame(animationFrame)
+      const nextCompact = window.scrollY > 56
+      if (nextCompact === isCompact || animationFrame !== 0) return
+
       animationFrame = window.requestAnimationFrame(updateCompactState)
     }
 

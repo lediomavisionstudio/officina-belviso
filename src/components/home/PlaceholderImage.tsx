@@ -7,6 +7,7 @@ type PlaceholderImageProps = {
   caption?: string
   className?: string
   objectPosition?: string
+  mobileSrc?: string
   priority?: boolean
   ratio?: PlaceholderRatio
   sizes?: string
@@ -28,6 +29,7 @@ export function PlaceholderImage({
   caption,
   className = '',
   objectPosition = 'center',
+  mobileSrc,
   priority = false,
   ratio = 'landscape',
   sizes,
@@ -47,17 +49,22 @@ export function PlaceholderImage({
     <figure className={`placeholder-image ${className}`.trim()} style={style}>
       <div className="placeholder-image__media">
         {src ? (
-          <img
-            src={src}
-            srcSet={srcSet}
-            sizes={srcSet ? responsiveSizes : undefined}
-            alt={alt}
-            loading={priority ? 'eager' : 'lazy'}
-            decoding="async"
-            fetchPriority={priority ? 'high' : 'auto'}
-            style={{ objectPosition }}
-            data-placeholder-photo
-          />
+          <picture>
+            {mobileSrc ? (
+              <source media="(max-width: 960px)" srcSet={mobileSrc} />
+            ) : null}
+            <img
+              src={src}
+              srcSet={srcSet}
+              sizes={srcSet ? responsiveSizes : undefined}
+              alt={alt}
+              loading={priority ? 'eager' : 'lazy'}
+              decoding="async"
+              fetchPriority={priority ? 'high' : 'auto'}
+              style={{ objectPosition }}
+              data-placeholder-photo
+            />
+          </picture>
         ) : (
           <div
             className="placeholder-image__empty"

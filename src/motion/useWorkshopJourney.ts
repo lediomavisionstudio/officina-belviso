@@ -611,6 +611,21 @@ export function useWorkshopJourney(rootRef: RefObject<HTMLElement | null>) {
               transitionDistance: window.innerWidth,
               verticalDistances: [0, 0, 0],
             }
+            const setSectionY = sections.map((section) =>
+              gsap.quickSetter(section, 'y', 'px'),
+            )
+            const setTrackX = gsap.quickSetter(track, 'x', 'px')
+            const setPanelOpacity = panels.map((panel) =>
+              gsap.quickSetter(panel, 'opacity'),
+            )
+            const setPanelScale = panels.map((panel) =>
+              gsap.quickSetter(panel, 'scale'),
+            )
+            const previousSectionY = sections.map(() => Number.NaN)
+            const previousPanelOpacity = panels.map(() => Number.NaN)
+            const previousPanelScale = panels.map(() => Number.NaN)
+            let previousTrackX = Number.NaN
+            gsap.set([track, ...sections], { force3D: true })
 
             const measure = () => {
               const viewportWidth = viewport.clientWidth || window.innerWidth
@@ -657,13 +672,16 @@ export function useWorkshopJourney(rootRef: RefObject<HTMLElement | null>) {
               let transitionIndex = -1
               let transitionProgress = 0
 
-              sections.forEach((section, index) => {
+              sections.forEach((_, index) => {
                 const localDistance = distance - geometry.panelStarts[index]
                 const y = -Math.max(
                   0,
                   Math.min(geometry.verticalDistances[index], localDistance),
                 )
-                gsap.set(section, { force3D: true, y })
+                if (y !== previousSectionY[index]) {
+                  previousSectionY[index] = y
+                  setSectionY[index](y)
+                }
               })
 
               for (let index = 0; index < panels.length - 1; index += 1) {
@@ -689,22 +707,37 @@ export function useWorkshopJourney(rootRef: RefObject<HTMLElement | null>) {
                 break
               }
 
-              gsap.set(track, { force3D: true, x: trackX })
-              gsap.set(panels, { opacity: 1, scale: 1 })
+              if (trackX !== previousTrackX) {
+                previousTrackX = trackX
+                setTrackX(trackX)
+              }
+
+              const nextPanelOpacity = panels.map(() => 1)
+              const nextPanelScale = panels.map(() => 1)
 
               if (transitionIndex >= 0) {
-                gsap.set(panels[transitionIndex], {
-                  opacity: 1 - transitionProgress * 0.14,
-                  scale: 1 - transitionProgress * 0.03,
-                })
-                gsap.set(panels[transitionIndex + 1], {
-                  opacity: 0.9 + transitionProgress * 0.1,
-                  scale:
-                    workshopJourneyConfig.panelEntryScale -
+                nextPanelOpacity[transitionIndex] =
+                  1 - transitionProgress * 0.14
+                nextPanelScale[transitionIndex] =
+                  1 - transitionProgress * 0.03
+                nextPanelOpacity[transitionIndex + 1] =
+                  0.9 + transitionProgress * 0.1
+                nextPanelScale[transitionIndex + 1] =
+                  workshopJourneyConfig.panelEntryScale -
                     transitionProgress *
-                      (workshopJourneyConfig.panelEntryScale - 1),
-                })
+                      (workshopJourneyConfig.panelEntryScale - 1)
               }
+
+              panels.forEach((_, index) => {
+                if (nextPanelOpacity[index] !== previousPanelOpacity[index]) {
+                  previousPanelOpacity[index] = nextPanelOpacity[index]
+                  setPanelOpacity[index](nextPanelOpacity[index])
+                }
+                if (nextPanelScale[index] !== previousPanelScale[index]) {
+                  previousPanelScale[index] = nextPanelScale[index]
+                  setPanelScale[index](nextPanelScale[index])
+                }
+              })
 
               const activeIndex = geometry.panelStarts.reduce(
                 (currentIndex, panelStart, index) => {
