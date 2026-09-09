@@ -651,7 +651,8 @@ export function useWorkshopJourney(rootRef: RefObject<HTMLElement | null>) {
             }
 
             const render = (progress: number) => {
-              const distance = progress * geometry.totalDistance
+              const clampedProgress = gsap.utils.clamp(0, 1, progress)
+              const distance = clampedProgress * geometry.totalDistance
               let trackX = 0
               let transitionIndex = -1
               let transitionProgress = 0
@@ -722,9 +723,9 @@ export function useWorkshopJourney(rootRef: RefObject<HTMLElement | null>) {
                 setPanelState(WORKSHOP_JOURNEY_PANEL_IDS[activeIndex], direction)
               }
 
-              line.style.transform = `scaleX(${0.12 + progress * 0.88})`
+              line.style.transform = `scaleX(${0.12 + clampedProgress * 0.88})`
               if (WORKSHOP_JOURNEY_DEBUG && debug) {
-                debug.textContent = `panel: ${WORKSHOP_JOURNEY_PANEL_IDS[activeIndex]} · progress: ${progress.toFixed(3)} · track: ${Math.round(trackX)}px`
+                debug.textContent = `panel: ${WORKSHOP_JOURNEY_PANEL_IDS[activeIndex]} · progress: ${clampedProgress.toFixed(3)} · track: ${Math.round(trackX)}px`
               }
             }
 
@@ -886,17 +887,11 @@ export function useWorkshopJourney(rootRef: RefObject<HTMLElement | null>) {
               requestRefresh(true)
             }
             const refreshAfterLoad = () => requestRefresh(true)
-            const refreshAfterViewportResize = () => requestRefresh(true)
             window.addEventListener('resize', preservePanelAndRefresh, {
               passive: true,
             })
             window.addEventListener('orientationchange', refreshAfterOrientation)
             window.addEventListener('load', refreshAfterLoad, { once: true })
-            window.visualViewport?.addEventListener(
-              'resize',
-              refreshAfterViewportResize,
-              { passive: true },
-            )
             void document.fonts?.ready.then(() => {
               if (!controller.signal.aborted) requestRefresh(true)
             })
@@ -930,10 +925,6 @@ export function useWorkshopJourney(rootRef: RefObject<HTMLElement | null>) {
                 refreshAfterOrientation,
               )
               window.removeEventListener('load', refreshAfterLoad)
-              window.visualViewport?.removeEventListener(
-                'resize',
-                refreshAfterViewportResize,
-              )
               document.removeEventListener(WORKSHOP_JOURNEY_NAVIGATE_EVENT, navigate)
               window.removeEventListener('keydown', keydown)
               window.removeEventListener('hashchange', handleHashChange)

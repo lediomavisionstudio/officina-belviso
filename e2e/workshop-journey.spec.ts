@@ -82,6 +82,7 @@ test.describe('Workshop Journey prototype', () => {
   })
 
   test('drives the mobile horizontal narrative exclusively with vertical scroll', async ({ page }) => {
+    test.setTimeout(150_000)
     for (const viewport of [
       { width: 375, height: 812 },
       { width: 390, height: 844 },
@@ -115,10 +116,16 @@ test.describe('Workshop Journey prototype', () => {
         const previousScrollBehavior =
           document.documentElement.style.scrollBehavior
         document.documentElement.style.scrollBehavior = 'auto'
+        const waitForScrollRender = () =>
+          new Promise<void>((resolve) =>
+            window.requestAnimationFrame(() =>
+              window.requestAnimationFrame(() => resolve()),
+            ),
+          )
 
         for (let step = 0; step <= 30; step += 1) {
           window.scrollTo(0, start + (distance * step) / 30)
-          await new Promise<void>((resolve) => window.setTimeout(resolve, 50))
+          await waitForScrollRender()
           const active = document
             .querySelector<HTMLElement>(
               '[data-workshop-panel][aria-hidden="false"]',
@@ -130,7 +137,7 @@ test.describe('Workshop Journey prototype', () => {
         const visitedBackward: string[] = []
         for (let step = 30; step >= 0; step -= 1) {
           window.scrollTo(0, start + (distance * step) / 30)
-          await new Promise<void>((resolve) => window.setTimeout(resolve, 50))
+          await waitForScrollRender()
           const active = document
             .querySelector<HTMLElement>(
               '[data-workshop-panel][aria-hidden="false"]',
@@ -173,6 +180,101 @@ test.describe('Workshop Journey prototype', () => {
       await expect(
         page.locator('.story-link[href="#servizi"]'),
       ).toHaveAttribute('aria-current', 'location')
+    }
+  })
+
+  test('has no inert interval at the mobile journey boundaries', async ({ page }) => {
+    test.setTimeout(90_000)
+    for (const viewport of [
+      { width: 375, height: 812 },
+      { width: 390, height: 844 },
+      { width: 430, height: 932 },
+    ]) {
+      await page.setViewportSize(viewport)
+      await page.goto('/')
+      await page.evaluate(() => document.fonts.ready)
+      await page.waitForTimeout(250)
+
+      const result = await page.evaluate(async () => {
+        const journey = document.querySelector<HTMLElement>(
+          '[data-workshop-journey]',
+        )!
+        const track = journey.querySelector<HTMLElement>(
+          '[data-workshop-track]',
+        )!
+        const sections = Array.from(
+          journey.querySelectorAll<HTMLElement>('[data-workshop-panel] > section'),
+        )
+        const gallery = document.querySelector<HTMLElement>('#galleria')!
+        const start = journey.offsetTop
+        const distance = journey.offsetHeight - window.innerHeight
+        const previousScrollBehavior =
+          document.documentElement.style.scrollBehavior
+        document.documentElement.style.scrollBehavior = 'auto'
+        const readTransform = (element: HTMLElement) => {
+          const transform = getComputedStyle(element).transform
+          const matrix = new DOMMatrixReadOnly(transform === 'none' ? undefined : transform)
+          return { x: matrix.m41, y: matrix.m42 }
+        }
+        const samples: Array<{ scrollY: number; trackX: number; sectionY: number[] }> = []
+
+        for (let step = 0; step <= 48; step += 1) {
+          window.scrollTo({
+            behavior: 'auto',
+            top: start + (distance * step) / 48,
+          })
+          await new Promise<void>((resolve) =>
+            window.requestAnimationFrame(() =>
+              window.requestAnimationFrame(() => resolve()),
+            ),
+          )
+          samples.push({
+            scrollY: window.scrollY,
+            trackX: readTransform(track).x,
+            sectionY: sections.map((section) => readTransform(section).y),
+          })
+        }
+
+        const inertIntervals = samples.slice(1).filter((sample, index) => {
+          const previous = samples[index]
+          const scrollDelta = Math.abs(sample.scrollY - previous.scrollY)
+          const visualDelta =
+            Math.abs(sample.trackX - previous.trackX) +
+            sample.sectionY.reduce(
+              (total, y, sectionIndex) =>
+                total + Math.abs(y - previous.sectionY[sectionIndex]),
+              0,
+            )
+          return scrollDelta > 1 && visualDelta < 0.5
+        }).length
+
+        const finalTrackX = readTransform(track).x
+        const expectedTrackX = -(track.scrollWidth - window.innerWidth)
+        const galleryTopAtEnd = gallery.getBoundingClientRect().top
+        window.scrollTo({
+          behavior: 'auto',
+          top: start + distance + window.innerHeight * 0.35,
+        })
+        await new Promise<void>((resolve) =>
+          window.requestAnimationFrame(() => resolve()),
+        )
+        const galleryTopAfterExit = gallery.getBoundingClientRect().top
+        document.documentElement.style.scrollBehavior = previousScrollBehavior
+
+        return {
+          expectedTrackX,
+          finalTrackX,
+          galleryTopAfterExit,
+          galleryTopAtEnd,
+          inertIntervals,
+        }
+      })
+
+      expect(result.inertIntervals).toBe(0)
+      expect(Math.abs(result.finalTrackX - result.expectedTrackX)).toBeLessThan(2)
+      expect(result.galleryTopAtEnd).toBeGreaterThan(viewport.height - 2)
+      expect(result.galleryTopAtEnd).toBeLessThan(viewport.height + 2)
+      expect(result.galleryTopAfterExit).toBeLessThan(result.galleryTopAtEnd)
     }
   })
 
@@ -300,6 +402,40 @@ test.describe('Workshop Journey prototype', () => {
         document.documentElement.scrollWidth - document.documentElement.clientWidth,
       ),
     ).toBe(0)
+  })
+
+  test('keeps the active mobile panel stable across height-only viewport changes', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto('/')
+    await page.getByRole('button', { name: 'Apri menu' }).click()
+    await page.getByRole('link', { name: 'Chi siamo', exact: true }).click()
+    const aboutPanel = page.locator('[data-workshop-panel="chi-siamo"]')
+    await expect(aboutPanel).toHaveAttribute('aria-hidden', 'false')
+    await expect
+      .poll(() =>
+        aboutPanel.evaluate((panel) =>
+          Math.abs(panel.getBoundingClientRect().left),
+        ),
+      )
+      .toBeLessThan(2)
+
+    const scrollBeforeResize = await page.evaluate(() => window.scrollY)
+    await page.setViewportSize({ width: 390, height: 760 })
+    await page.waitForTimeout(350)
+
+    await expect(aboutPanel).toHaveAttribute('aria-hidden', 'false')
+    await expect
+      .poll(() =>
+        aboutPanel.evaluate((panel) =>
+          Math.abs(panel.getBoundingClientRect().left),
+        ),
+      )
+      .toBeLessThan(2)
+    expect(
+      Math.abs((await page.evaluate(() => window.scrollY)) - scrollBeforeResize),
+    ).toBeLessThan(2)
   })
 
   test('keeps the quote title above the form and outside the business card', async ({
