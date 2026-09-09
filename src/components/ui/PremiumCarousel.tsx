@@ -27,6 +27,14 @@ type DragState = {
   startX: number
 }
 
+type TouchGestureState = {
+  axis: 'horizontal' | 'vertical' | null
+  startX: number
+  startY: number
+}
+
+const TOUCH_AXIS_THRESHOLD = 10
+
 type CarouselLayout = {
   endSpacerWidth: number
   pageCount: number
@@ -48,6 +56,11 @@ export function PremiumCarousel({
   const nativeTouchActiveRef = useRef(false)
   const releaseDragTimerRef = useRef<number | null>(null)
   const targetPageRef = useRef(0)
+  const touchGestureRef = useRef<TouchGestureState>({
+    axis: null,
+    startX: 0,
+    startY: 0,
+  })
   const dragRef = useRef<DragState>({
     active: false,
     didDrag: false,
@@ -394,7 +407,9 @@ export function PremiumCarousel({
 
     if (event.pointerType === 'touch') {
       nativeTouchActiveRef.current = false
-      scheduleNativeSnap()
+      if (touchGestureRef.current.axis === 'horizontal') scheduleNativeSnap()
+      touchGestureRef.current.axis = null
+      track.removeAttribute('data-touch-axis')
       return
     }
 
@@ -422,6 +437,11 @@ export function PremiumCarousel({
 
     if (event.pointerType === 'touch') {
       nativeTouchActiveRef.current = true
+      touchGestureRef.current = {
+        axis: null,
+        startX: event.clientX,
+        startY: event.clientY,
+      }
       if (nativeSnapTimerRef.current !== null) {
         window.clearTimeout(nativeSnapTimerRef.current)
         nativeSnapTimerRef.current = null
@@ -447,7 +467,22 @@ export function PremiumCarousel({
 
   const handlePointerMove = (event: PointerEvent<HTMLDivElement>) => {
     const track = trackRef.current
-    if (!track || !dragRef.current.active) return
+    if (!track) return
+
+    if (event.pointerType === 'touch') {
+      const gesture = touchGestureRef.current
+      if (gesture.axis !== null) return
+
+      const distanceX = Math.abs(event.clientX - gesture.startX)
+      const distanceY = Math.abs(event.clientY - gesture.startY)
+      if (Math.max(distanceX, distanceY) < TOUCH_AXIS_THRESHOLD) return
+
+      gesture.axis = distanceX > distanceY ? 'horizontal' : 'vertical'
+      track.dataset.touchAxis = gesture.axis
+      return
+    }
+
+    if (!dragRef.current.active) return
 
     const movement = event.clientX - dragRef.current.startX
     if (Math.abs(movement) > 4) dragRef.current.didDrag = true

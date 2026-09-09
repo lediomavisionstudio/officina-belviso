@@ -762,6 +762,49 @@ test.describe('Home V2', () => {
         )
         .toBeLessThan(2)
     })
+
+    test('keeps vertical page swipes available over a carousel', async ({
+      page,
+      context,
+    }) => {
+      await page.goto('/')
+      await openJourneyPanel(page, 'servizi')
+
+      const track = page
+        .getByRole('region', { name: 'Servizi Officina Belviso' })
+        .locator('[data-carousel-track]')
+      await track.scrollIntoViewIfNeeded()
+      const bounds = await track.boundingBox()
+      expect(bounds).not.toBeNull()
+      if (!bounds) return
+
+      const before = await page.evaluate(() => window.scrollY)
+      const session = await context.newCDPSession(page)
+      const x = bounds.x + bounds.width * 0.5
+      const startY = bounds.y + bounds.height * 0.72
+      const endY = Math.max(12, bounds.y + bounds.height * 0.18)
+
+      await session.send('Input.dispatchTouchEvent', {
+        type: 'touchStart',
+        touchPoints: [{ x, y: startY }],
+      })
+      for (let step = 1; step <= 10; step += 1) {
+        await session.send('Input.dispatchTouchEvent', {
+          type: 'touchMove',
+          touchPoints: [
+            { x, y: startY + ((endY - startY) * step) / 10 },
+          ],
+        })
+      }
+      await session.send('Input.dispatchTouchEvent', {
+        type: 'touchEnd',
+        touchPoints: [],
+      })
+
+      await expect
+        .poll(() => page.evaluate(() => window.scrollY))
+        .toBeGreaterThan(before + 40)
+    })
   })
 
   test('has an operable mobile menu with Escape focus restoration', async ({ page }) => {

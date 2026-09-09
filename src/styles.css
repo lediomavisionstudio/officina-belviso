@@ -2882,6 +2882,11 @@ section[id] {
   .premium-carousel__track {
     gap: 14px;
     padding-bottom: 28px;
+    scroll-snap-type: x proximity;
+  }
+
+  .premium-carousel__slide[data-carousel-page-start='true'] {
+    scroll-snap-stop: normal;
   }
 
   .premium-carousel__edge {

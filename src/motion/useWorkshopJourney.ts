@@ -735,7 +735,14 @@ export function useWorkshopJourney(rootRef: RefObject<HTMLElement | null>) {
               markers: WORKSHOP_JOURNEY_DEBUG,
               onEnter: () => gsap.set(line, { autoAlpha: 1 }),
               onEnterBack: () => gsap.set(line, { autoAlpha: 1 }),
-              onLeave: () => gsap.set(line, { autoAlpha: 0 }),
+              onLeave: () => {
+                render(1)
+                gsap.set(line, { autoAlpha: 0 })
+              },
+              onLeaveBack: () => {
+                render(0)
+                gsap.set(line, { autoAlpha: 0 })
+              },
               onRefresh: (self) => render(self.progress),
               onUpdate: (self) => render(self.progress),
               start: 'top top',
@@ -754,8 +761,7 @@ export function useWorkshopJourney(rootRef: RefObject<HTMLElement | null>) {
               cancelNavigationTween?.()
               if (mobileOptimized) {
                 cancelNavigationTween = scrollWindowTo({
-                  behavior: detail.behavior ?? 'smooth',
-                  duration: 0.42,
+                  behavior: 'auto',
                   onComplete: () => {
                     cancelNavigationTween = null
                     detail.onComplete?.()
@@ -880,11 +886,17 @@ export function useWorkshopJourney(rootRef: RefObject<HTMLElement | null>) {
               requestRefresh(true)
             }
             const refreshAfterLoad = () => requestRefresh(true)
+            const refreshAfterViewportResize = () => requestRefresh(true)
             window.addEventListener('resize', preservePanelAndRefresh, {
               passive: true,
             })
             window.addEventListener('orientationchange', refreshAfterOrientation)
             window.addEventListener('load', refreshAfterLoad, { once: true })
+            window.visualViewport?.addEventListener(
+              'resize',
+              refreshAfterViewportResize,
+              { passive: true },
+            )
             void document.fonts?.ready.then(() => {
               if (!controller.signal.aborted) requestRefresh(true)
             })
@@ -918,6 +930,10 @@ export function useWorkshopJourney(rootRef: RefObject<HTMLElement | null>) {
                 refreshAfterOrientation,
               )
               window.removeEventListener('load', refreshAfterLoad)
+              window.visualViewport?.removeEventListener(
+                'resize',
+                refreshAfterViewportResize,
+              )
               document.removeEventListener(WORKSHOP_JOURNEY_NAVIGATE_EVENT, navigate)
               window.removeEventListener('keydown', keydown)
               window.removeEventListener('hashchange', handleHashChange)

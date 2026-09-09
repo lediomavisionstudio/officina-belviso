@@ -270,7 +270,7 @@ export function StoryNav() {
     if (window.matchMedia(WORKSHOP_JOURNEY_MOBILE_QUERY).matches) {
       cancelTimedScroll = scrollWindowTo({
         behavior,
-        duration: 0.42,
+        duration: 0.32,
         onComplete: finishProgrammaticScroll,
         top: getSectionScrollTop(target, navigationRef.current),
       })
