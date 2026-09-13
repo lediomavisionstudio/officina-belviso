@@ -2690,7 +2690,7 @@ section[id] {
     position: fixed;
     z-index: -1;
     inset: 0;
-    background: rgb(5 6 7 / 24%);
+    background: transparent;
     content: "";
     opacity: 0;
     pointer-events: none;
@@ -2793,6 +2793,51 @@ section[id] {
     --section-space: 82px;
   }
 
+  .about-image-carousel__slide {
+    visibility: hidden;
+  }
+
+  .about-image-carousel__slide[data-active="true"] {
+    visibility: visible;
+  }
+
+  .about-image-carousel__indicator {
+    width: 44px;
+    min-width: 44px;
+    max-width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
+    -webkit-appearance: none;
+    appearance: none;
+    box-shadow: none;
+  }
+
+  .about-image-carousel__indicator::before,
+  .about-image-carousel__indicator::after {
+    display: none;
+    content: none;
+  }
+
+  .about-image-carousel__indicator span {
+    display: block;
+    width: 7px;
+    min-width: 7px;
+    max-width: 7px;
+    height: 7px;
+    min-height: 7px;
+    max-height: 7px;
+    box-shadow: none;
+    transition:
+      background-color 220ms var(--ease-premium),
+      opacity 220ms var(--ease-premium);
+  }
+
+  .about-image-carousel__indicator[aria-current="true"] span {
+    width: 19px;
+    min-width: 19px;
+    max-width: 19px;
+  }
+
   .brand-logo-frame {
     width: 142px;
   }
@@ -2882,7 +2927,7 @@ section[id] {
   .premium-carousel__track {
     gap: 14px;
     padding-bottom: 28px;
-    scroll-snap-type: x proximity;
+    scroll-snap-type: x mandatory;
   }
 
   .premium-carousel__slide[data-carousel-page-start='true'] {
@@ -3661,12 +3706,13 @@ section[id] {
     top: 0;
     height: 100svh;
     background-position: center center;
-    transform: translate3d(0, 0, 0) scale(1.04);
+    transform: translate3d(0, 0, 0) scale(1.10);
     will-change: auto;
   }
 
   .cinematic-background__overlay {
     position: absolute;
+    background: rgb(4 7 10 / 72%);
     opacity: 0.8;
     will-change: auto;
   }

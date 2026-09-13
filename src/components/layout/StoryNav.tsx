@@ -55,6 +55,19 @@ function getSectionScrollTop(
   )
 }
 
+function getMobileNavigationOffset(navigation: HTMLElement | null) {
+  return Math.max(0, navigation?.getBoundingClientRect().bottom ?? 0) + 24
+}
+
+function getMobileSectionScrollTop(
+  section: HTMLElement,
+  navigation: HTMLElement | null,
+) {
+  const sectionTop = section.getBoundingClientRect().top + window.scrollY
+
+  return Math.max(0, sectionTop - getMobileNavigationOffset(navigation))
+}
+
 export function StoryNav() {
   const { requestQuoteForService } = useQuoteRequest()
   const [isOpen, setIsOpen] = useState(false)
@@ -71,6 +84,7 @@ export function StoryNav() {
   const isProgrammaticScrollRef = useRef(false)
   const programmaticTargetRef = useRef<string | null>(null)
   const cleanupProgrammaticScrollRef = useRef<(() => void) | null>(null)
+  const pendingMenuNavigationFrameRef = useRef(0)
   const updateActiveSectionRef = useRef<() => void>(() => undefined)
   useNavigationMotion(navigationRef, activeSection, isOpen)
 
@@ -125,6 +139,7 @@ export function StoryNav() {
                 sectionId,
                 behavior,
                 onComplete: finishProgrammaticScroll,
+                refreshGeometry: true,
               },
             },
           ),
@@ -215,12 +230,10 @@ export function StoryNav() {
     let lastScrollY = window.scrollY
     let hasMoved = false
     let isComplete = false
-    let cancelTimedScroll: (() => void) | null = null
 
     const cleanup = () => {
       window.cancelAnimationFrame(animationFrame)
       window.removeEventListener('scrollend', finishProgrammaticScroll)
-      cancelTimedScroll?.()
     }
 
     const finishProgrammaticScroll = () => {
@@ -268,11 +281,20 @@ export function StoryNav() {
     cleanupProgrammaticScrollRef.current = cleanup
 
     if (window.matchMedia(WORKSHOP_JOURNEY_MOBILE_QUERY).matches) {
-      cancelTimedScroll = scrollWindowTo({
-        behavior,
-        duration: 0.32,
-        onComplete: finishProgrammaticScroll,
-        top: getSectionScrollTop(target, navigationRef.current),
+      scrollWindowTo({
+        behavior: 'auto',
+        top: getMobileSectionScrollTop(target, navigationRef.current),
+      })
+
+      animationFrame = window.requestAnimationFrame(() => {
+        const correctedTop = getMobileSectionScrollTop(
+          target,
+          navigationRef.current,
+        )
+        if (Math.abs(window.scrollY - correctedTop) > 2) {
+          scrollWindowTo({ behavior: 'auto', top: correctedTop })
+        }
+        finishProgrammaticScroll()
       })
       return true
     }
@@ -483,17 +505,27 @@ export function StoryNav() {
         requestQuoteForService(requestedServiceId)
       }
 
+      const toggle = toggleRef.current
+      const isMobileMenuLink =
+        anchor.closest('.story-nav') !== null &&
+        toggle !== null &&
+        getComputedStyle(toggle).display !== 'none'
+
+      if (isMobileMenuLink) {
+        event.preventDefault()
+        setIsOpen(false)
+        window.cancelAnimationFrame(pendingMenuNavigationFrameRef.current)
+        pendingMenuNavigationFrameRef.current = window.requestAnimationFrame(() => {
+          pendingMenuNavigationFrameRef.current = 0
+          navigateToSection(sectionId)
+          toggle.focus({ preventScroll: true })
+        })
+        return
+      }
+
       const usesCustomOffset = navigateToSection(sectionId)
       if (usesCustomOffset) {
         event.preventDefault()
-      }
-      if (anchor.closest('.story-nav')) {
-        setIsOpen(false)
-
-        const toggle = toggleRef.current
-        if (toggle && getComputedStyle(toggle).display !== 'none') {
-          window.requestAnimationFrame(() => toggle.focus({ preventScroll: true }))
-        }
       }
     }
 
@@ -501,6 +533,8 @@ export function StoryNav() {
 
     return () => {
       document.removeEventListener('click', handleSectionLinkClick)
+      window.cancelAnimationFrame(pendingMenuNavigationFrameRef.current)
+      pendingMenuNavigationFrameRef.current = 0
       cleanupProgrammaticScrollRef.current?.()
       cleanupProgrammaticScrollRef.current = null
       isProgrammaticScrollRef.current = false

@@ -41,6 +41,21 @@ type CarouselLayout = {
   pageSize: number
 }
 
+type CarouselMetrics = {
+  gap: number
+  maximumScroll: number
+  pagePositions: number[]
+  pageSize: number
+  pageStarts: number[]
+  slideWidth: number
+}
+
+const NATIVE_TOUCH_SCROLL_QUERY =
+  '(max-width: 620px), (hover: none) and (pointer: coarse)'
+
+const usesNativeTouchScrolling = () =>
+  window.matchMedia(NATIVE_TOUCH_SCROLL_QUERY).matches
+
 export function PremiumCarousel({
   ariaLabel,
   children,
@@ -52,10 +67,15 @@ export function PremiumCarousel({
   const tweenRef = useRef<gsap.core.Tween | null>(null)
   const contentTweenRef = useRef<gsap.core.Timeline | null>(null)
   const animationFrameRef = useRef(0)
-  const nativeSnapTimerRef = useRef<number | null>(null)
+  const desktopSnapTimerRef = useRef<number | null>(null)
+  const nativeStateSyncTimerRef = useRef<number | null>(null)
   const nativeTouchActiveRef = useRef(false)
   const releaseDragTimerRef = useRef<number | null>(null)
   const targetPageRef = useRef(0)
+  const metricsRef = useRef<CarouselMetrics | null>(null)
+  const currentPageRef = useRef(0)
+  const canGoPreviousRef = useRef(false)
+  const canGoNextRef = useRef(true)
   const touchGestureRef = useRef<TouchGestureState>({
     axis: null,
     startX: 0,
@@ -77,7 +97,7 @@ export function PremiumCarousel({
     pageSize: 1,
   })
 
-  const readCarouselMetrics = useCallback(() => {
+  const readCarouselMetrics = useCallback((): CarouselMetrics | null => {
     const track = trackRef.current
     if (!track) return null
 
@@ -87,10 +107,11 @@ export function PremiumCarousel({
     )
     if (slideElements.length === 0) return null
 
-    const positions = slideElements.map(
-      (slide) => slide.getBoundingClientRect().left - trackBounds.left + track.scrollLeft,
+    const slideBounds = slideElements.map((slide) => slide.getBoundingClientRect())
+    const positions = slideBounds.map(
+      (bounds) => bounds.left - trackBounds.left + track.scrollLeft,
     )
-    const slideWidth = slideElements[0].getBoundingClientRect().width
+    const slideWidth = slideBounds[0].width
     const gap = Number.parseFloat(getComputedStyle(track).columnGap) || 0
     const pageSize = Math.max(
       1,
@@ -106,12 +127,34 @@ export function PremiumCarousel({
 
     return {
       gap,
+      maximumScroll: Math.max(0, track.scrollWidth - track.clientWidth),
       pagePositions: pageStarts.map((slideIndex) => positions[slideIndex]),
       pageSize,
       pageStarts,
       slideWidth,
     }
   }, [])
+
+  const commitCarouselState = useCallback(
+    (displayedPage: number, isScrollable: boolean, pageCount: number) => {
+      const nextCanGoPrevious = isScrollable && displayedPage > 0
+      const nextCanGoNext = isScrollable && displayedPage < pageCount - 1
+
+      if (currentPageRef.current !== displayedPage) {
+        currentPageRef.current = displayedPage
+        setCurrentPage(displayedPage)
+      }
+      if (canGoPreviousRef.current !== nextCanGoPrevious) {
+        canGoPreviousRef.current = nextCanGoPrevious
+        setCanGoPrevious(nextCanGoPrevious)
+      }
+      if (canGoNextRef.current !== nextCanGoNext) {
+        canGoNextRef.current = nextCanGoNext
+        setCanGoNext(nextCanGoNext)
+      }
+    },
+    [],
+  )
 
   const updateCarouselState = useCallback(() => {
     const track = trackRef.current
@@ -131,16 +174,36 @@ export function PremiumCarousel({
     const displayedPage = tweenRef.current?.isActive()
       ? targetPageRef.current
       : closestPage
-    const maximumScroll = Math.max(0, track.scrollWidth - track.clientWidth)
-    const isScrollable = maximumScroll > 1
+    const isScrollable = metrics.maximumScroll > 1
 
     if (!tweenRef.current?.isActive()) targetPageRef.current = closestPage
-    setCurrentPage(displayedPage)
-    setCanGoPrevious(isScrollable && displayedPage > 0)
-    setCanGoNext(
-      isScrollable && displayedPage < metrics.pagePositions.length - 1,
+    commitCarouselState(displayedPage, isScrollable, metrics.pagePositions.length)
+  }, [commitCarouselState, readCarouselMetrics])
+
+  const updateNativeCarouselState = useCallback(() => {
+    const track = trackRef.current
+    if (!track) return
+
+    const metrics = metricsRef.current ?? readCarouselMetrics()
+    if (!metrics) return
+    metricsRef.current = metrics
+
+    const closestPage = metrics.pagePositions.reduce(
+      (closest, position, index) =>
+        Math.abs(position - track.scrollLeft) <
+        Math.abs(metrics.pagePositions[closest] - track.scrollLeft)
+          ? index
+          : closest,
+      0,
     )
-  }, [readCarouselMetrics])
+
+    targetPageRef.current = closestPage
+    commitCarouselState(
+      closestPage,
+      metrics.maximumScroll > 1,
+      metrics.pagePositions.length,
+    )
+  }, [commitCarouselState, readCarouselMetrics])
 
   const scheduleStateUpdate = useCallback(() => {
     window.cancelAnimationFrame(animationFrameRef.current)
@@ -152,32 +215,54 @@ export function PremiumCarousel({
       const track = trackRef.current
       if (!track) return
 
-      const metrics = readCarouselMetrics()
+      const nativeTouchScrolling = usesNativeTouchScrolling()
+      const metrics = nativeTouchScrolling
+        ? metricsRef.current ?? readCarouselMetrics()
+        : readCarouselMetrics()
       if (!metrics) return
+      if (nativeTouchScrolling) metricsRef.current = metrics
 
       const clampedPage = Math.min(
         Math.max(nextPage, 0),
         metrics.pagePositions.length - 1,
       )
-      const maximumScroll = Math.max(0, track.scrollWidth - track.clientWidth)
-      const target = Math.min(metrics.pagePositions[clampedPage], maximumScroll)
+      const target = Math.min(
+        metrics.pagePositions[clampedPage],
+        metrics.maximumScroll,
+      )
       const previousPage = targetPageRef.current
       const direction = clampedPage >= previousPage ? 1 : -1
-      if (nativeSnapTimerRef.current !== null) {
-        window.clearTimeout(nativeSnapTimerRef.current)
-        nativeSnapTimerRef.current = null
+      if (nativeStateSyncTimerRef.current !== null) {
+        window.clearTimeout(nativeStateSyncTimerRef.current)
+        nativeStateSyncTimerRef.current = null
+      }
+      if (desktopSnapTimerRef.current !== null) {
+        window.clearTimeout(desktopSnapTimerRef.current)
+        desktopSnapTimerRef.current = null
       }
       tweenRef.current?.kill()
       contentTweenRef.current?.kill()
       targetPageRef.current = clampedPage
-      setCurrentPage(clampedPage)
-      setCanGoPrevious(clampedPage > 0)
-      setCanGoNext(clampedPage < metrics.pagePositions.length - 1)
+      commitCarouselState(
+        clampedPage,
+        metrics.maximumScroll > 1,
+        metrics.pagePositions.length,
+      )
       if (Math.abs(track.scrollLeft - target) < 0.5) {
         tweenRef.current = null
-        updateCarouselState()
+        if (nativeTouchScrolling) updateNativeCarouselState()
+        else updateCarouselState()
         return
       }
+
+      if (nativeTouchScrolling) {
+        track.scrollTo({
+          left: target,
+          behavior: reducedMotion ? 'auto' : 'smooth',
+        })
+        return
+      }
+
       tweenRef.current = gsap.to(track, {
         scrollLeft: target,
         duration: reducedMotion ? 0 : motionTokens.duration.carousel,
@@ -249,7 +334,14 @@ export function PremiumCarousel({
           )
       }
     },
-    [readCarouselMetrics, reducedMotion, scheduleStateUpdate, updateCarouselState],
+    [
+      commitCarouselState,
+      readCarouselMetrics,
+      reducedMotion,
+      scheduleStateUpdate,
+      updateCarouselState,
+      updateNativeCarouselState,
+    ],
   )
 
   const snapToClosestPage = useCallback(() => {
@@ -274,6 +366,7 @@ export function PremiumCarousel({
   const syncResponsiveLayout = useCallback(() => {
     const metrics = readCarouselMetrics()
     if (!metrics) return
+    metricsRef.current = metrics
 
     const remainder = slides.length % metrics.pageSize
     const missingSlides = remainder === 0 ? 0 : metrics.pageSize - remainder
@@ -298,17 +391,23 @@ export function PremiumCarousel({
     scheduleStateUpdate()
   }, [readCarouselMetrics, scheduleStateUpdate, slides.length])
 
-  const scheduleNativeSnap = useCallback(() => {
-    if (nativeSnapTimerRef.current !== null) {
-      window.clearTimeout(nativeSnapTimerRef.current)
+  const scheduleNativeStateSync = useCallback(() => {
+    if (nativeStateSyncTimerRef.current !== null) {
+      window.clearTimeout(nativeStateSyncTimerRef.current)
     }
-    nativeSnapTimerRef.current = window.setTimeout(() => {
-      nativeSnapTimerRef.current = null
-      if (
-        !nativeTouchActiveRef.current &&
-        !dragRef.current.active &&
-        !tweenRef.current?.isActive()
-      ) {
+    nativeStateSyncTimerRef.current = window.setTimeout(() => {
+      nativeStateSyncTimerRef.current = null
+      if (!nativeTouchActiveRef.current) updateNativeCarouselState()
+    }, 220)
+  }, [updateNativeCarouselState])
+
+  const scheduleDesktopSnap = useCallback(() => {
+    if (desktopSnapTimerRef.current !== null) {
+      window.clearTimeout(desktopSnapTimerRef.current)
+    }
+    desktopSnapTimerRef.current = window.setTimeout(() => {
+      desktopSnapTimerRef.current = null
+      if (!dragRef.current.active && !tweenRef.current?.isActive()) {
         snapToClosestPage()
       }
     }, 220)
@@ -320,16 +419,30 @@ export function PremiumCarousel({
 
     const supportsScrollEnd = 'onscrollend' in track
     const handleTrackScroll = () => {
+      if (usesNativeTouchScrolling()) {
+        if (!nativeTouchActiveRef.current) scheduleNativeStateSync()
+        return
+      }
+
       scheduleStateUpdate()
       if (
         !nativeTouchActiveRef.current &&
         !dragRef.current.active &&
         !tweenRef.current?.isActive()
       ) {
-        scheduleNativeSnap()
+        scheduleDesktopSnap()
       }
     }
     const handleScrollEnd = () => {
+      if (usesNativeTouchScrolling()) {
+        if (nativeStateSyncTimerRef.current !== null) {
+          window.clearTimeout(nativeStateSyncTimerRef.current)
+          nativeStateSyncTimerRef.current = null
+        }
+        if (!nativeTouchActiveRef.current) updateNativeCarouselState()
+        return
+      }
+
       if (
         !nativeTouchActiveRef.current &&
         !dragRef.current.active &&
@@ -359,8 +472,11 @@ export function PremiumCarousel({
       resizeObserver.disconnect()
       mutationObserver.disconnect()
       window.cancelAnimationFrame(animationFrameRef.current)
-      if (nativeSnapTimerRef.current !== null) {
-        window.clearTimeout(nativeSnapTimerRef.current)
+      if (nativeStateSyncTimerRef.current !== null) {
+        window.clearTimeout(nativeStateSyncTimerRef.current)
+      }
+      if (desktopSnapTimerRef.current !== null) {
+        window.clearTimeout(desktopSnapTimerRef.current)
       }
       if (releaseDragTimerRef.current !== null) {
         window.clearTimeout(releaseDragTimerRef.current)
@@ -369,10 +485,12 @@ export function PremiumCarousel({
       contentTweenRef.current?.kill()
     }
   }, [
-    scheduleNativeSnap,
+    scheduleDesktopSnap,
+    scheduleNativeStateSync,
     scheduleStateUpdate,
     snapToClosestPage,
     syncResponsiveLayout,
+    updateNativeCarouselState,
   ])
 
   useLayoutEffect(() => {
@@ -381,6 +499,7 @@ export function PremiumCarousel({
 
     const metrics = readCarouselMetrics()
     if (!metrics) return
+    metricsRef.current = metrics
 
     const closestPage = metrics.pagePositions.reduce(
       (closest, position, index) =>
@@ -407,7 +526,7 @@ export function PremiumCarousel({
 
     if (event.pointerType === 'touch') {
       nativeTouchActiveRef.current = false
-      if (touchGestureRef.current.axis === 'horizontal') scheduleNativeSnap()
+      if (touchGestureRef.current.axis === 'horizontal') scheduleNativeStateSync()
       touchGestureRef.current.axis = null
       track.removeAttribute('data-touch-axis')
       return
@@ -442,9 +561,9 @@ export function PremiumCarousel({
         startX: event.clientX,
         startY: event.clientY,
       }
-      if (nativeSnapTimerRef.current !== null) {
-        window.clearTimeout(nativeSnapTimerRef.current)
-        nativeSnapTimerRef.current = null
+      if (nativeStateSyncTimerRef.current !== null) {
+        window.clearTimeout(nativeStateSyncTimerRef.current)
+        nativeStateSyncTimerRef.current = null
       }
       tweenRef.current?.kill()
       tweenRef.current = null

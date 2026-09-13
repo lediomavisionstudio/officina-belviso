@@ -579,15 +579,18 @@ export function useHomeMotion(scope: RefObject<HTMLElement | null>) {
             const imageCover = imageMedia?.querySelector<HTMLElement>(
               '.placeholder-image__reveal-cover',
             )
+            const animateAboutMedia = !(
+              horizontalMotionActive && conditions.cinematicMobile
+            )
             const copy = [eyebrow, title, description, body].filter(
               (target): target is HTMLElement => target !== null,
             )
             setMotionHint([
               ...copy,
               ...stats,
-              ...(imageMedia ? [imageMedia] : []),
-              ...(image ? [image] : []),
-              ...(imageCover ? [imageCover] : []),
+              ...(animateAboutMedia && imageMedia ? [imageMedia] : []),
+              ...(animateAboutMedia && image ? [image] : []),
+              ...(animateAboutMedia && imageCover ? [imageCover] : []),
             ])
 
             createReplayableSection({
@@ -642,7 +645,7 @@ export function useHomeMotion(scope: RefObject<HTMLElement | null>) {
                     descriptionStart,
                   )
                 }
-                if (imageCover) {
+                if (animateAboutMedia && imageCover) {
                   timeline.fromTo(
                     imageCover,
                     {
@@ -660,7 +663,7 @@ export function useHomeMotion(scope: RefObject<HTMLElement | null>) {
                     imageStart,
                   )
                 }
-                if (image) {
+                if (animateAboutMedia && image) {
                   timeline.fromTo(
                     image,
                     {
@@ -695,6 +698,8 @@ export function useHomeMotion(scope: RefObject<HTMLElement | null>) {
                   statsLabel,
                 )
                 statValues.forEach((element, index) => {
+                  if (horizontalMotionActive && conditions.compact) return
+
                   const targetValue = Number(element.dataset.kpiValue)
                   const decimals = Number(element.dataset.kpiDecimals ?? 0)
                   const suffix = element.dataset.kpiSuffix ?? ''

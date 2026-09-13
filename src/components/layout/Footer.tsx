@@ -107,7 +107,7 @@ export function Footer() {
 
       <Container className="site-footer__bottom">
         <p>© {new Date().getFullYear()} {contact.companyName}<span>Tutti i diritti riservati.</span></p>
-        <p>Progettato e sviluppato da <a href={credits.url} target="_blank" rel="noreferrer">{credits.label}</a></p>
+        <p>Progettato e sviluppato da <a href={credits.url} target="_blank" rel="noopener noreferrer">{credits.label}</a></p>
       </Container>
     </footer>
   )

@@ -605,10 +605,11 @@ export function useWorkshopJourney(rootRef: RefObject<HTMLElement | null>) {
               WORKSHOP_JOURNEY_PANEL_IDS.indexOf(activeId),
             )
             let geometry = {
+              holdDistances: [0, 0, 0],
               panelOffsets: [0, window.innerWidth, window.innerWidth * 2],
               panelStarts: [0, window.innerWidth, window.innerWidth * 2],
               totalDistance: window.innerWidth * 2,
-              transitionDistance: window.innerWidth,
+              transitionDistances: [window.innerWidth, window.innerWidth],
               verticalDistances: [0, 0, 0],
             }
 
@@ -619,7 +620,7 @@ export function useWorkshopJourney(rootRef: RefObject<HTMLElement | null>) {
                 0,
                 track.scrollWidth - viewportWidth,
               )
-              const transitionDistance =
+              const baseTransitionDistance =
                 horizontalDistance / Math.max(1, panels.length - 1)
               const verticalDistances = sections.map((section, index) =>
                 Math.max(
@@ -628,26 +629,40 @@ export function useWorkshopJourney(rootRef: RefObject<HTMLElement | null>) {
                     (panels[index].clientHeight || window.innerHeight),
                 ),
               )
+              const holdDistances = [...verticalDistances]
+              const aboutHoldReduction = holdDistances[1] * 0.5
+              holdDistances[1] -= aboutHoldReduction
+              const transitionDistances = panels.slice(0, -1).map(
+                (_, index) =>
+                  baseTransitionDistance +
+                  aboutHoldReduction * (index === 0 ? 0.3 : 0.7),
+              )
               const panelStarts: number[] = []
               let cursor = 0
-
               panels.forEach((_, index) => {
                 panelStarts.push(cursor)
-                cursor += verticalDistances[index]
-                if (index < panels.length - 1) cursor += transitionDistance
+                cursor += holdDistances[index]
+                if (index < panels.length - 1) {
+                  cursor += transitionDistances[index]
+                }
               })
 
               geometry = {
+                holdDistances,
                 panelOffsets,
                 panelStarts,
                 totalDistance: Math.max(1, cursor),
-                transitionDistance,
+                transitionDistances,
                 verticalDistances,
               }
               journey.style.setProperty(
                 '--workshop-scroll-distance',
                 String(geometry.totalDistance),
               )
+            }
+
+            const updateTrackX = (trackX: number) => {
+              track.style.transform = `translate3d(${trackX}px, 0, 0)`
             }
 
             const render = (progress: number) => {
@@ -658,27 +673,32 @@ export function useWorkshopJourney(rootRef: RefObject<HTMLElement | null>) {
 
               sections.forEach((section, index) => {
                 const localDistance = distance - geometry.panelStarts[index]
-                const y = -Math.max(
+                const holdProgress = Math.max(
                   0,
-                  Math.min(geometry.verticalDistances[index], localDistance),
+                  Math.min(
+                    1,
+                    localDistance / Math.max(1, geometry.holdDistances[index]),
+                  ),
                 )
+                const y = -geometry.verticalDistances[index] * holdProgress
                 gsap.set(section, { force3D: true, y })
               })
 
               for (let index = 0; index < panels.length - 1; index += 1) {
                 const transitionStart =
-                  geometry.panelStarts[index] + geometry.verticalDistances[index]
+                  geometry.panelStarts[index] + geometry.holdDistances[index]
                 const transitionEnd = geometry.panelStarts[index + 1]
 
                 if (distance >= transitionEnd) {
                   trackX = -geometry.panelOffsets[index + 1]
                   continue
                 }
+
                 if (distance >= transitionStart) {
                   transitionIndex = index
                   transitionProgress =
                     (distance - transitionStart) /
-                    Math.max(1, geometry.transitionDistance)
+                    Math.max(1, geometry.transitionDistances[index])
                   trackX = gsap.utils.interpolate(
                     -geometry.panelOffsets[index],
                     -geometry.panelOffsets[index + 1],
@@ -688,7 +708,7 @@ export function useWorkshopJourney(rootRef: RefObject<HTMLElement | null>) {
                 break
               }
 
-              gsap.set(track, { force3D: true, x: trackX })
+              updateTrackX(trackX)
               gsap.set(panels, { opacity: 1, scale: 1 })
 
               if (transitionIndex >= 0) {
@@ -707,9 +727,10 @@ export function useWorkshopJourney(rootRef: RefObject<HTMLElement | null>) {
 
               const activeIndex = geometry.panelStarts.reduce(
                 (currentIndex, panelStart, index) => {
-                  if (index === 0) return currentIndex
                   const activationPoint =
-                    panelStart - geometry.transitionDistance * 0.5
+                    index === 0
+                      ? panelStart
+                      : panelStart - geometry.transitionDistances[index - 1] * 0.5
                   return distance >= activationPoint ? index : currentIndex
                 },
                 0,
@@ -753,6 +774,10 @@ export function useWorkshopJourney(rootRef: RefObject<HTMLElement | null>) {
               const detail = (event as CustomEvent<WorkshopJourneyNavigateDetail>)
                 .detail
               if (!detail || !isWorkshopJourneyPanel(detail.sectionId)) return
+              if (detail.refreshGeometry) {
+                measure()
+                ScrollTrigger.refresh()
+              }
               const index = WORKSHOP_JOURNEY_PANEL_IDS.indexOf(detail.sectionId)
               const direction: WorkshopJourneyDirection =
                 index > previousIndex ? 'forward' : 'backward'
@@ -886,7 +911,7 @@ export function useWorkshopJourney(rootRef: RefObject<HTMLElement | null>) {
               requestRefresh(true)
             }
             const refreshAfterLoad = () => requestRefresh(true)
-            const refreshAfterViewportResize = () => requestRefresh(true)
+            const refreshAfterViewportResize = () => requestRefresh()
             window.addEventListener('resize', preservePanelAndRefresh, {
               passive: true,
             })

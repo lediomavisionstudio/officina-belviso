@@ -30,14 +30,14 @@ export const siteConfig = {
     { day: 'Domenica', periods: ['Chiuso'] },
   ],
   social: {
-    facebook: null,
-    instagram: null,
+    facebook: 'https://www.facebook.com/officinabelviso',
+    instagram: 'https://www.instagram.com/officina.belviso?igsi=cGR5cmtxd2k1YWJ1&utm_source=qr',
     linkedin: null,
     whatsapp: null,
   },
   credits: {
     label: 'Ledioma Vision Studio',
-    url: 'https://ledioma.it',
+    url: 'https://1.lediomavisionstudio.workers.dev/',
   },
   googleBusiness: {
     rating: 4.9,

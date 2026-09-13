@@ -35,6 +35,7 @@ export type WorkshopJourneyNavigateDetail = {
   sectionId: WorkshopJourneyPanelId
   behavior?: ScrollBehavior
   onComplete?: () => void
+  refreshGeometry?: boolean
 }
 
 export function isWorkshopJourneyPanel(

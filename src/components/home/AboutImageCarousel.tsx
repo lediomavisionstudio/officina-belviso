@@ -38,6 +38,7 @@ export function AboutImageCarousel() {
 
           return (
             <img
+              key={image.id}
               className="about-image-carousel__slide"
               src={image.src}
               alt={isActive ? image.alt : ''}
