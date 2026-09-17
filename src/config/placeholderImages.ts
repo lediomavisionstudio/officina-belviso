@@ -42,9 +42,9 @@ export const placeholderImages = {
   hero: {
     image: {
       alt: 'Tecnico al lavoro sull\u2019impianto di un veicolo industriale',
-      src: '/assets/home-hero-officina-panoramica.png?v=1',
+      src: '/assets/home-hero-officina-panoramica.webp?v=1',
     },
-    sourceUrl: '/assets/home-hero-officina-panoramica.png',
+    sourceUrl: '/assets/home-hero-officina-panoramica.webp',
   },
   about: pexelsPhoto(
     7019371,
@@ -57,49 +57,49 @@ export const placeholderImages = {
       image: {
         alt: 'Tecnico di Officina Belviso durante un intervento sull’impianto frenante',
         objectPosition: '50% 32%',
-        src: '/assets/services/impianto-frenante.png',
+        src: '/assets/services/impianto-frenante.webp',
       },
-      sourceUrl: '/assets/services/impianto-frenante.png',
+      sourceUrl: '/assets/services/impianto-frenante.webp',
     },
     {
       image: {
         alt: 'Tecnico di Officina Belviso durante un intervento sull’impianto ad aria compressa',
         objectPosition: '50% 30%',
-        src: '/assets/services/servizio-aria-compressa.png',
+        src: '/assets/services/servizio-aria-compressa.webp',
       },
-      sourceUrl: '/assets/services/servizio-aria-compressa.png',
+      sourceUrl: '/assets/services/servizio-aria-compressa.webp',
     },
     {
       image: {
         alt: 'Tecnico di Officina Belviso durante una diagnosi EBS e ABS su un veicolo industriale',
         objectPosition: '50% 52%',
-        src: '/assets/services/servizio-diagnosi-ebs-abs.png',
+        src: '/assets/services/servizio-diagnosi-ebs-abs.webp',
       },
-      sourceUrl: '/assets/services/servizio-diagnosi-ebs-abs.png',
+      sourceUrl: '/assets/services/servizio-diagnosi-ebs-abs.webp',
     },
     {
       image: {
         alt: 'Veicolo industriale sottoposto a diagnosi ECAS presso Officina Belviso',
         objectPosition: '50% 58%',
-        src: '/assets/services/servizio-diagnosi-ecas.png',
+        src: '/assets/services/servizio-diagnosi-ecas.webp',
       },
-      sourceUrl: '/assets/services/servizio-diagnosi-ecas.png',
+      sourceUrl: '/assets/services/servizio-diagnosi-ecas.webp',
     },
     {
       image: {
         alt: 'Sospensioni di un veicolo industriale durante un intervento in officina',
         objectPosition: '50% 50%',
-        src: '/assets/services/servizio-sospensioni.png',
+        src: '/assets/services/servizio-sospensioni.webp',
       },
-      sourceUrl: '/assets/services/servizio-sospensioni.png',
+      sourceUrl: '/assets/services/servizio-sospensioni.webp',
     },
     {
       image: {
         alt: 'Veicolo industriale presso la sede di Officina Belviso',
         objectPosition: '50% 41%',
-        src: '/assets/services/manutenzione-veicoli-industriali.png',
+        src: '/assets/services/manutenzione-veicoli-industriali.webp',
       },
-      sourceUrl: '/assets/services/manutenzione-veicoli-industriali.png',
+      sourceUrl: '/assets/services/manutenzione-veicoli-industriali.webp',
     },
   ],
   works: [
@@ -107,39 +107,39 @@ export const placeholderImages = {
       image: {
         alt: 'Tecnico di Officina Belviso durante una diagnosi elettronica',
         objectPosition: '50% 48%',
-        src: '/assets/works/lavoro-diagnosi-elettronica.png',
+        src: '/assets/works/lavoro-diagnosi-elettronica.webp',
       },
-      sourceUrl: '/assets/works/lavoro-diagnosi-elettronica.png',
+      sourceUrl: '/assets/works/lavoro-diagnosi-elettronica.webp',
     },
     {
       image: {
         alt: 'Impianti frenanti di un veicolo industriale durante un intervento in officina',
-        src: '/assets/works/sistemi-frenanti.png',
+        src: '/assets/works/sistemi-frenanti.webp',
       },
-      sourceUrl: '/assets/works/sistemi-frenanti.png',
+      sourceUrl: '/assets/works/sistemi-frenanti.webp',
     },
     {
       image: {
         alt: 'Modulo di controllo per impianti pneumatici di veicoli industriali',
         objectPosition: '50% 18%',
-        src: '/assets/works/impianti-pneumatici.png',
+        src: '/assets/works/impianti-pneumatici.webp',
       },
-      sourceUrl: '/assets/works/impianti-pneumatici.png',
+      sourceUrl: '/assets/works/impianti-pneumatici.webp',
     },
     {
       image: {
         alt: 'Tecnico di Officina Belviso durante un intervento sulle sospensioni',
         objectPosition: '50% 30%',
-        src: '/assets/works/lavoro-sospensioni.png',
+        src: '/assets/works/lavoro-sospensioni.webp',
       },
-      sourceUrl: '/assets/works/lavoro-sospensioni.png',
+      sourceUrl: '/assets/works/lavoro-sospensioni.webp',
     },
     {
       image: {
         alt: 'Tecnico di Officina Belviso durante un intervento di manutenzione programmata',
-        src: '/assets/works/manutenzione-programmata.png',
+        src: '/assets/works/manutenzione-programmata.webp',
       },
-      sourceUrl: '/assets/works/manutenzione-programmata.png',
+      sourceUrl: '/assets/works/manutenzione-programmata.webp',
     },
   ],
   career: pexelsPhoto(

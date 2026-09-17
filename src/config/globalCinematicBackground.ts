@@ -2,7 +2,7 @@ export const ENABLE_GLOBAL_CINEMATIC_BACKGROUND = true
 
 export const globalCinematicBackgroundConfig = {
   image: {
-    src: '/assets/officina-belviso-workshop.png',
+    src: '/assets/officina-belviso-workshop.webp',
   },
   desktop: {
     scale: 1.08,
