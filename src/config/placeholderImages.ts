@@ -61,10 +61,38 @@ export const placeholderImages = {
       },
       sourceUrl: '/assets/services/impianto-frenante.png',
     },
-    pexelsPhoto(9754814, 'https://www.pexels.com/photo/an-air-compressor-9754814/', 'Compressore d\u2019aria in un ambiente di lavoro industriale', '50% 55%'),
-    pexelsPhoto(7564861, 'https://www.pexels.com/photo/mechanic-repairing-a-truck-engine-7564861/', 'Meccanico impegnato nella riparazione del motore di un camion', '50% 42%'),
-    pexelsPhoto(7564860, 'https://www.pexels.com/photo/car-mechanic-at-work-7564860/', 'Tecnico al lavoro sui sistemi meccanici di un veicolo industriale', '58% 62%'),
-    pexelsPhoto(6720515, 'https://www.pexels.com/photo/a-man-holding-a-tire-6720515/', 'Tecnico durante la manutenzione di una ruota per veicoli pesanti', '50% 45%'),
+    {
+      image: {
+        alt: 'Tecnico di Officina Belviso durante un intervento sull’impianto ad aria compressa',
+        objectPosition: '50% 30%',
+        src: '/assets/services/servizio-aria-compressa.png',
+      },
+      sourceUrl: '/assets/services/servizio-aria-compressa.png',
+    },
+    {
+      image: {
+        alt: 'Tecnico di Officina Belviso durante una diagnosi EBS e ABS su un veicolo industriale',
+        objectPosition: '50% 52%',
+        src: '/assets/services/servizio-diagnosi-ebs-abs.png',
+      },
+      sourceUrl: '/assets/services/servizio-diagnosi-ebs-abs.png',
+    },
+    {
+      image: {
+        alt: 'Veicolo industriale sottoposto a diagnosi ECAS presso Officina Belviso',
+        objectPosition: '50% 58%',
+        src: '/assets/services/servizio-diagnosi-ecas.png',
+      },
+      sourceUrl: '/assets/services/servizio-diagnosi-ecas.png',
+    },
+    {
+      image: {
+        alt: 'Sospensioni di un veicolo industriale durante un intervento in officina',
+        objectPosition: '50% 50%',
+        src: '/assets/services/servizio-sospensioni.png',
+      },
+      sourceUrl: '/assets/services/servizio-sospensioni.png',
+    },
     {
       image: {
         alt: 'Veicolo industriale presso la sede di Officina Belviso',
@@ -75,7 +103,14 @@ export const placeholderImages = {
     },
   ],
   works: [
-    pexelsPhoto(7006667, 'https://www.pexels.com/photo/a-person-fixing-a-truck-7006667/', 'Camion rosso durante un intervento tecnico in officina'),
+    {
+      image: {
+        alt: 'Tecnico di Officina Belviso durante una diagnosi elettronica',
+        objectPosition: '50% 48%',
+        src: '/assets/works/lavoro-diagnosi-elettronica.png',
+      },
+      sourceUrl: '/assets/works/lavoro-diagnosi-elettronica.png',
+    },
     {
       image: {
         alt: 'Impianti frenanti di un veicolo industriale durante un intervento in officina',
@@ -91,7 +126,14 @@ export const placeholderImages = {
       },
       sourceUrl: '/assets/works/impianti-pneumatici.png',
     },
-    pexelsPhoto(8985603, 'https://www.pexels.com/photo/mechanic-removing-a-tire-8985603/', 'Tecnico durante un intervento su ruota e sospensioni', '50% 48%'),
+    {
+      image: {
+        alt: 'Tecnico di Officina Belviso durante un intervento sulle sospensioni',
+        objectPosition: '50% 30%',
+        src: '/assets/works/lavoro-sospensioni.png',
+      },
+      sourceUrl: '/assets/works/lavoro-sospensioni.png',
+    },
     {
       image: {
         alt: 'Tecnico di Officina Belviso durante un intervento di manutenzione programmata',
