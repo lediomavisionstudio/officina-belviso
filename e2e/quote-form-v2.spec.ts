@@ -62,7 +62,7 @@ test.describe('Quote form production fields', () => {
 
     await expect(prefix).toHaveValue('IT')
     await expect(form.locator('[name="phonePrefix"]')).toHaveValue('+39')
-    await number.fill('33a3-123 456789')
+    await number.pressSequentially('33a3-123 456789')
     await expect(number).toHaveValue('3331234567')
     await expect(form.locator('[name="phone"]')).toHaveValue('+393331234567')
 
@@ -72,6 +72,9 @@ test.describe('Quote form production fields', () => {
   })
 
   test('supports selection, removal, Escape, click outside and valid submit', async ({ page }) => {
+    await page.route('**/api/contact', async (route) => {
+      await route.fulfill({ json: { ok: true }, status: 200 })
+    })
     const form = await openQuoteForm(page)
     const trigger = form.locator('.form-multiselect__trigger')
 
@@ -90,11 +93,11 @@ test.describe('Quote form production fields', () => {
     await expect(trigger).toBeFocused()
 
     await trigger.click()
-    await form.locator('[name="problemDescription"]').click()
+    await page.mouse.click(1, 1)
     await expect(trigger).toHaveAttribute('aria-expanded', 'false')
 
     await completeRequiredFields(form)
     await form.getByRole('button', { name: 'Conferma invio' }).click()
-    await expect(form.getByRole('status')).toContainText('servizio verrà attivato')
+    await expect(form.getByRole('status')).toContainText('Richiesta inviata correttamente')
   })
 })

@@ -2,6 +2,7 @@ import {
   type ChangeEvent,
   type FormEvent,
   useId,
+  useRef,
   useState,
 } from 'react'
 import {
@@ -29,6 +30,8 @@ type ContactFormProps = {
 }
 
 type FormErrors = Record<string, string>
+
+type SubmissionStatus = 'error' | 'idle' | 'success'
 
 const vehicleBrands = [
   'Mercedes-Benz',
@@ -86,8 +89,8 @@ function validateForm(data: FormData, mode: ContactFormMode) {
 
   if (mode === 'quote') {
     const phoneNumber = valueOf(data, 'phoneNumber')
-    if (phoneNumber && !/^\d{1,10}$/.test(phoneNumber)) {
-      errors.phoneNumber = 'Il numero può contenere al massimo 10 cifre.'
+    if (phoneNumber && !/^\d{6,10}$/.test(phoneNumber)) {
+      errors.phoneNumber = 'Inserisci un numero compreso tra 6 e 10 cifre.'
     }
   } else {
     const phone = valueOf(data, 'phone')
@@ -118,7 +121,10 @@ export function ContactForm({ mode }: ContactFormProps) {
   const [errors, setErrors] = useState<FormErrors>({})
   const [phonePrefix, setPhonePrefix] = useState(phonePrefixOptions[0])
   const [phoneNumber, setPhoneNumber] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [status, setStatus] = useState('')
+  const [submissionStatus, setSubmissionStatus] = useState<SubmissionStatus>('idle')
+  const submissionLock = useRef(false)
   const id = (name: string) => `${formId}-${name}`
 
   const clearError = (fieldName: string) => {
@@ -128,7 +134,10 @@ export function ContactForm({ mode }: ContactFormProps) {
       delete next[fieldName]
       return next
     })
-    if (status) setStatus('')
+    if (status) {
+      setStatus('')
+      setSubmissionStatus('idle')
+    }
   }
 
   const clearFieldError = (event: ChangeEvent<HTMLFormElement>) => {
@@ -137,19 +146,23 @@ export function ContactForm({ mode }: ContactFormProps) {
     clearError(fieldName)
   }
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    const formData = new FormData(event.currentTarget)
+    if (submissionLock.current) return
+
+    const form = event.currentTarget
+    const formData = new FormData(form)
     const nextErrors = validateForm(formData, mode)
     setErrors(nextErrors)
 
     const firstInvalidField = Object.keys(nextErrors)[0]
     if (firstInvalidField) {
       setStatus('Controlla i campi evidenziati e completa le informazioni richieste.')
-      const fieldRoot = event.currentTarget.querySelector<HTMLElement>(
+      setSubmissionStatus('error')
+      const fieldRoot = form.querySelector<HTMLElement>(
         `[data-form-field="${firstInvalidField}"]`,
       )
-      const namedControl = event.currentTarget.elements.namedItem(firstInvalidField)
+      const namedControl = form.elements.namedItem(firstInvalidField)
       const control = fieldRoot?.querySelector<HTMLElement>('button, input, select, textarea')
         ?? (namedControl instanceof HTMLElement ? namedControl : null)
         ?? (namedControl instanceof RadioNodeList && namedControl[0] instanceof HTMLElement
@@ -163,9 +176,72 @@ export function ContactForm({ mode }: ContactFormProps) {
       return
     }
 
-    setStatus(
-      'Le informazioni sono complete. L’invio sarà disponibile non appena il servizio verrà attivato.',
-    )
+    const payload = mode === 'quote'
+      ? {
+          firstName: valueOf(formData, 'firstName'),
+          lastName: valueOf(formData, 'lastName'),
+          company: valueOf(formData, 'company'),
+          email: valueOf(formData, 'email'),
+          phonePrefix: valueOf(formData, 'phonePrefix'),
+          phonePrefixCountry: valueOf(formData, 'phonePrefixCountry'),
+          phoneNumber: valueOf(formData, 'phoneNumber'),
+          phone: valueOf(formData, 'phone'),
+          vehicleBrand: valueOf(formData, 'vehicleBrand'),
+          vehicleModel: valueOf(formData, 'vehicleModel'),
+          registrationYear: valueOf(formData, 'registrationYear'),
+          vin: valueOf(formData, 'vin'),
+          licensePlate: valueOf(formData, 'licensePlate'),
+          vehicleRunning: valueOf(formData, 'vehicleRunning'),
+          serviceType: valueOf(formData, 'serviceType'),
+          problemDescription: valueOf(formData, 'problemDescription'),
+          privacy: formData.get('privacy') === 'on',
+          website: valueOf(formData, 'website'),
+        }
+      : {
+          firstName: valueOf(formData, 'firstName'),
+          lastName: valueOf(formData, 'lastName'),
+          email: valueOf(formData, 'email'),
+          phone: valueOf(formData, 'phone'),
+          role: valueOf(formData, 'role'),
+          message: valueOf(formData, 'message'),
+          privacy: formData.get('privacy') === 'on',
+          website: valueOf(formData, 'website'),
+        }
+
+    submissionLock.current = true
+    setIsSubmitting(true)
+    setStatus('')
+    setSubmissionStatus('idle')
+
+    try {
+      const response = await fetch(mode === 'quote' ? '/api/contact' : '/api/careers', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      })
+
+      if (!response.ok) throw new Error('Submission failed')
+
+      form.reset()
+      setPhonePrefix(phonePrefixOptions[0])
+      setPhoneNumber('')
+      setSelectedInterventions([])
+      setErrors({})
+      setSubmissionStatus('success')
+      setStatus(
+        mode === 'quote'
+          ? 'Richiesta inviata correttamente. Ti ricontatteremo nel più breve tempo possibile.'
+          : 'Candidatura inviata correttamente. Grazie per averci contattato.',
+      )
+    } catch {
+      setSubmissionStatus('error')
+      setStatus('Non è stato possibile inviare la richiesta. Riprova tra qualche minuto.')
+    } finally {
+      submissionLock.current = false
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -180,6 +256,14 @@ export function ContactForm({ mode }: ContactFormProps) {
       onChange={clearFieldError}
       onSubmit={handleSubmit}
     >
+      <input
+        aria-hidden="true"
+        autoComplete="off"
+        hidden
+        name="website"
+        tabIndex={-1}
+        type="text"
+      />
       <fieldset className="contact-form__group">
         <legend>Dati personali</legend>
         <Input
@@ -371,12 +455,16 @@ export function ContactForm({ mode }: ContactFormProps) {
       />
 
       <div className="contact-form__footer">
-        <Button className="contact-form__submit" type="submit">
-          {mode === 'quote' ? 'Conferma invio' : 'Invia candidatura'}
+        <Button className="contact-form__submit" disabled={isSubmitting} type="submit">
+          {isSubmitting
+            ? 'Invio in corso…'
+            : mode === 'quote'
+              ? 'Conferma invio'
+              : 'Invia candidatura'}
         </Button>
         <p
           className="contact-form__status"
-          role={Object.keys(errors).length > 0 ? 'alert' : 'status'}
+          role={Object.keys(errors).length > 0 || submissionStatus === 'error' ? 'alert' : 'status'}
           aria-live="polite"
         >
           {status}
