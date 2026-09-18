@@ -6,6 +6,8 @@ type SeoMetaProps = {
   metadata: SeoMetadata
 }
 
+const LOCAL_BUSINESS_JSON_LD_ID = 'officina-belviso-local-business-jsonld'
+
 function upsertMeta(selector: string, attributes: Record<string, string>) {
   let element = document.head.querySelector<HTMLMetaElement>(selector)
 
@@ -21,6 +23,30 @@ function upsertMeta(selector: string, attributes: Record<string, string>) {
 
 function removeMeta(selector: string) {
   document.head.querySelector(selector)?.remove()
+}
+
+function serializeStructuredData(data: Readonly<Record<string, unknown>>) {
+  return JSON.stringify(data)
+    .replace(/</g, '\\u003c')
+    .replace(/\u2028/g, '\\u2028')
+    .replace(/\u2029/g, '\\u2029')
+}
+
+function updateStructuredData(data?: Readonly<Record<string, unknown>>) {
+  const existing = document.getElementById(LOCAL_BUSINESS_JSON_LD_ID)
+
+  if (!data) {
+    existing?.remove()
+    return
+  }
+
+  const script = existing instanceof HTMLScriptElement
+    ? existing
+    : document.createElement('script')
+  script.id = LOCAL_BUSINESS_JSON_LD_ID
+  script.type = 'application/ld+json'
+  script.textContent = serializeStructuredData(data)
+  if (!script.isConnected) document.head.append(script)
 }
 
 export function SeoMeta({ metadata }: SeoMetaProps) {
@@ -87,6 +113,12 @@ export function SeoMeta({ metadata }: SeoMetaProps) {
     } else {
       canonical?.remove()
       removeMeta('meta[property="og:url"]')
+    }
+
+    updateStructuredData(metadata.structuredData)
+
+    return () => {
+      document.getElementById(LOCAL_BUSINESS_JSON_LD_ID)?.remove()
     }
   }, [metadata])
 

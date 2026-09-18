@@ -2,6 +2,7 @@ export type SeoMetadata = {
   title: string
   description: string
   canonicalPath: string
+  structuredData?: Readonly<Record<string, unknown>>
   robots?: 'index, follow' | 'noindex, nofollow'
   openGraph?: {
     title?: string

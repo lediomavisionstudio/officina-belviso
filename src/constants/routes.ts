@@ -1,4 +1,5 @@
 import type { AppRoute } from '../types/routes'
+import { localBusinessStructuredData } from '../config/site'
 
 const homeDescription =
   'Officina Belviso offre diagnosi, manutenzione e riparazione per veicoli industriali, con interventi orientati a sicurezza e affidabilità.'
@@ -24,6 +25,7 @@ export const appRoutes = [
       title: 'Officina Belviso | Assistenza veicoli industriali',
       description: homeDescription,
       canonicalPath: '/',
+      structuredData: localBusinessStructuredData,
     },
   },
   {

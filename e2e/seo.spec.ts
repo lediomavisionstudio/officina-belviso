@@ -6,6 +6,8 @@ const sitemapUrls = [
   `${canonicalOrigin}/privacy-policy`,
   `${canonicalOrigin}/cookie-policy`,
 ]
+const localBusinessSelector =
+  'script#officina-belviso-local-business-jsonld[type="application/ld+json"]'
 
 test.describe('Technical SEO', () => {
   test('serves a minimal canonical sitemap as XML', async ({ request }) => {
@@ -81,5 +83,100 @@ test.describe('Technical SEO', () => {
       'content',
       'noindex, nofollow',
     )
+  })
+
+  test('publishes one valid AutoRepair JSON-LD block only on the home route', async ({ page }) => {
+    await page.goto('/')
+
+    const scripts = page.locator(localBusinessSelector)
+    await expect(scripts).toHaveCount(1)
+    const structuredData = JSON.parse(await scripts.textContent()) as {
+      '@context': string
+      '@type': string
+      address: Record<string, string>
+      name: string
+      openingHoursSpecification: Array<{
+        '@type': string
+        closes: string
+        dayOfWeek: string
+        opens: string
+      }>
+      telephone: string
+      url: string
+    }
+
+    expect(structuredData).toMatchObject({
+      '@context': 'https://schema.org',
+      '@type': 'AutoRepair',
+      name: 'Officina Belviso',
+      url: 'https://officinabelviso.it/',
+      telephone: '080 4783792',
+      address: {
+        '@type': 'PostalAddress',
+        streetAddress: 'Viale Sindaco Gerardo De Caro 9/11, Zona P.I.P.',
+        addressLocality: 'Noicattaro',
+        addressRegion: 'BA',
+        postalCode: '70016',
+        addressCountry: 'IT',
+      },
+    })
+    expect(structuredData.openingHoursSpecification).toEqual([
+      ...[
+        'Monday',
+        'Tuesday',
+        'Wednesday',
+        'Thursday',
+        'Friday',
+      ].flatMap((day) => [
+        {
+          '@type': 'OpeningHoursSpecification',
+          dayOfWeek: `https://schema.org/${day}`,
+          opens: '08:00',
+          closes: '13:00',
+        },
+        {
+          '@type': 'OpeningHoursSpecification',
+          dayOfWeek: `https://schema.org/${day}`,
+          opens: '15:00',
+          closes: '19:00',
+        },
+      ]),
+      {
+        '@type': 'OpeningHoursSpecification',
+        dayOfWeek: 'https://schema.org/Saturday',
+        opens: '08:00',
+        closes: '13:00',
+      },
+    ])
+    expect(JSON.stringify(structuredData)).not.toContain('Sunday')
+  })
+
+  test('removes and restores LocalBusiness JSON-LD without duplicates on SPA navigation', async ({ page }) => {
+    await page.goto('/')
+    await expect(page.locator(localBusinessSelector)).toHaveCount(1)
+
+    await page.evaluate(() => {
+      window.history.pushState({}, '', '/privacy-policy')
+      window.dispatchEvent(new PopStateEvent('popstate'))
+    })
+    await expect(page.locator(localBusinessSelector)).toHaveCount(0)
+
+    await page.evaluate(() => {
+      window.history.pushState({}, '', '/cookie-policy')
+      window.dispatchEvent(new PopStateEvent('popstate'))
+    })
+    await expect(page.locator(localBusinessSelector)).toHaveCount(0)
+
+    await page.evaluate(() => {
+      window.history.pushState({}, '', '/')
+      window.dispatchEvent(new PopStateEvent('popstate'))
+    })
+    await expect(page.locator(localBusinessSelector)).toHaveCount(1)
+
+    await page.evaluate(() => {
+      window.history.pushState({}, '', '/percorso-inesistente')
+      window.dispatchEvent(new PopStateEvent('popstate'))
+    })
+    await expect(page.locator(localBusinessSelector)).toHaveCount(0)
   })
 })

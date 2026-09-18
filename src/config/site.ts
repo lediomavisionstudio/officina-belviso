@@ -68,3 +68,39 @@ export const siteConfig = {
   googleMapsUrl:
     'https://www.google.com/maps/search/?api=1&query=Officina%20Belviso%20S.N.C.%20Viale%20Sindaco%20Gerardo%20Decaro%209%2F11%2C%20Zona%20P.I.P.%2070016%20Noicattaro%20BA',
 } satisfies SiteConfig
+
+const schemaDayByItalianName: Readonly<Record<string, string>> = {
+  Lunedì: 'https://schema.org/Monday',
+  Martedì: 'https://schema.org/Tuesday',
+  Mercoledì: 'https://schema.org/Wednesday',
+  Giovedì: 'https://schema.org/Thursday',
+  Venerdì: 'https://schema.org/Friday',
+  Sabato: 'https://schema.org/Saturday',
+  Domenica: 'https://schema.org/Sunday',
+}
+
+export const localBusinessStructuredData = {
+  '@context': 'https://schema.org',
+  '@type': 'AutoRepair',
+  name: siteConfig.name,
+  url: `${siteConfig.siteUrl}/`,
+  telephone: siteConfig.contact.phone,
+  address: {
+    '@type': 'PostalAddress',
+    streetAddress: 'Viale Sindaco Gerardo De Caro 9/11, Zona P.I.P.',
+    addressLocality: 'Noicattaro',
+    addressRegion: 'BA',
+    postalCode: '70016',
+    addressCountry: 'IT',
+  },
+  openingHoursSpecification: siteConfig.openingHours.flatMap(({ day, periods }) =>
+    periods.flatMap((period) => {
+      const [opens, closes] = period.split(' - ')
+      const dayOfWeek = schemaDayByItalianName[day]
+
+      return dayOfWeek && opens && closes
+        ? [{ '@type': 'OpeningHoursSpecification', dayOfWeek, opens, closes }]
+        : []
+    }),
+  ),
+} as const
