@@ -17,6 +17,25 @@ type EmailRow = {
 type EmailSection = {
   title: string
   rows: EmailRow[]
+  variant?: 'highlight'
+}
+
+type ContactActions = {
+  callLabel: string
+  firstName: string
+  phone: string
+  whatsappLabel: string
+}
+
+type PhoneLinks = {
+  telUrl: string
+  whatsappUrl: string
+}
+
+type EmailTemplateOptions = {
+  contactActions?: ContactActions
+  heading: string
+  sections: EmailSection[]
 }
 
 class RequestError extends Error {
@@ -123,33 +142,153 @@ function escapeHtml(value: string) {
   })[character] ?? character)
 }
 
-function displayValue(value: string) {
-  return value || 'Non indicato'
+function visibleRows(section: EmailSection) {
+  return section.rows.filter((row) => row.value.trim())
 }
 
 function renderText(sections: EmailSection[]) {
   return sections
-    .map((section) => [
-      section.title.toUpperCase(),
-      ...section.rows.map((row) => `${row.label}: ${displayValue(row.value)}`),
-    ].join('\n'))
+    .map((section) => {
+      const rows = visibleRows(section)
+      if (!rows.length) return ''
+      return [
+        section.title.toUpperCase(),
+        ...rows.map((row) => `${row.label}: ${row.value}`),
+      ].join('\n')
+    })
+    .filter(Boolean)
     .join('\n\n')
 }
 
-function renderHtml(title: string, sections: EmailSection[]) {
-  const content = sections.map((section) => `
-    <section style="margin:0 0 24px">
-      <h2 style="font-size:18px;margin:0 0 12px;color:#1f2937">${escapeHtml(section.title)}</h2>
-      <table role="presentation" style="border-collapse:collapse;width:100%">
-        ${section.rows.map((row) => `
-          <tr>
-            <th style="border-bottom:1px solid #e5e7eb;padding:8px 12px 8px 0;text-align:left;vertical-align:top;width:38%;color:#4b5563">${escapeHtml(row.label)}</th>
-            <td style="border-bottom:1px solid #e5e7eb;padding:8px 0;white-space:pre-wrap;color:#111827">${escapeHtml(displayValue(row.value))}</td>
-          </tr>`).join('')}
-      </table>
-    </section>`).join('')
+function createPhoneLinks(phone: string, firstName: string): PhoneLinks | null {
+  let digits = phone.replace(/\D/g, '')
+  if (phone.trim().startsWith('00')) digits = digits.slice(2)
+  if (digits.length < 6 || digits.length > 18) return null
 
-  return `<!doctype html><html lang="it"><body style="font-family:Arial,sans-serif;line-height:1.5;margin:0;padding:24px;background:#f3f4f6;color:#111827"><main style="max-width:680px;margin:auto;padding:28px;background:#fff;border-radius:12px"><h1 style="font-size:24px;margin:0 0 24px">${escapeHtml(title)}</h1>${content}</main></body></html>`
+  const telNumber = phone.trim().startsWith('+') || phone.trim().startsWith('00')
+    ? `+${digits}`
+    : digits
+  const message = `Buongiorno ${firstName}, ti contattiamo in merito alla richiesta inviata dal sito di Officina Belviso.`
+
+  return {
+    telUrl: `tel:${telNumber}`,
+    whatsappUrl: `https://wa.me/${digits}?text=${encodeURIComponent(message)}`,
+  }
+}
+
+function renderContactActions(actions?: ContactActions) {
+  if (!actions?.phone) return ''
+  const links = createPhoneLinks(actions.phone, actions.firstName)
+  if (!links) return ''
+
+  return `
+    <tr>
+      <td class="email-content" style="padding:0 32px 28px">
+        <h2 style="color:#171819;font-family:Arial,Helvetica,sans-serif;font-size:18px;line-height:1.3;margin:0 0 14px">Contatto rapido</h2>
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+          <tr>
+            <td class="email-cta" width="50%" style="padding:0 6px 0 0">
+              <a href="${links.telUrl}" style="background:#171819;border:1px solid #171819;border-radius:7px;color:#ffffff;display:block;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:700;line-height:20px;padding:13px 16px;text-align:center;text-decoration:none">${escapeHtml(actions.callLabel)}</a>
+            </td>
+            <td class="email-cta" width="50%" style="padding:0 0 0 6px">
+              <a href="${links.whatsappUrl}" target="_blank" rel="noopener noreferrer" style="background:#168b51;border:1px solid #168b51;border-radius:7px;color:#ffffff;display:block;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:700;line-height:20px;padding:13px 16px;text-align:center;text-decoration:none">${escapeHtml(actions.whatsappLabel)}</a>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>`
+}
+
+function renderContactText(actions?: ContactActions) {
+  if (!actions?.phone) return ''
+  const links = createPhoneLinks(actions.phone, actions.firstName)
+  if (!links) return ''
+  return [
+    'CONTATTO RAPIDO',
+    `${actions.callLabel}: ${links.telUrl}`,
+    `${actions.whatsappLabel}: ${links.whatsappUrl}`,
+  ].join('\n')
+}
+
+function renderSection(section: EmailSection) {
+  const rows = visibleRows(section)
+  if (!rows.length) return ''
+
+  const body = section.variant === 'highlight'
+    ? rows.map((row) => `
+        <div style="background:#f6f6f6;border-left:4px solid #d51f26;border-radius:4px;color:#171819;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;padding:16px 18px;white-space:pre-wrap">
+          ${rows.length > 1 ? `<strong style="display:block;margin-bottom:5px">${escapeHtml(row.label)}</strong>` : ''}${escapeHtml(row.value)}
+        </div>`).join('<div style="height:10px;line-height:10px">&nbsp;</div>')
+    : `
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border-collapse:collapse">
+          ${rows.map((row) => `
+            <tr>
+              <th class="email-label" width="38%" style="border-bottom:1px solid #e4e4e4;color:#606264;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:600;line-height:1.45;padding:10px 14px 10px 0;text-align:left;vertical-align:top">${escapeHtml(row.label)}</th>
+              <td class="email-value" style="border-bottom:1px solid #e4e4e4;color:#171819;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.45;padding:10px 0;vertical-align:top;white-space:pre-wrap">${escapeHtml(row.value)}</td>
+            </tr>`).join('')}
+        </table>`
+
+  return `
+    <tr>
+      <td class="email-content" style="padding:0 32px 28px">
+        <h2 style="color:#171819;font-family:Arial,Helvetica,sans-serif;font-size:18px;line-height:1.3;margin:0 0 12px">${escapeHtml(section.title)}</h2>
+        ${body}
+      </td>
+    </tr>`
+}
+
+function renderHtml({ contactActions, heading, sections }: EmailTemplateOptions) {
+  const content = sections
+    .map((section, index) => `${renderSection(section)}${index === 0 ? renderContactActions(contactActions) : ''}`)
+    .join('')
+
+  return `<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="x-apple-disable-message-reformatting">
+    <title>${escapeHtml(heading)}</title>
+    <style>
+      @media only screen and (max-width:560px) {
+        .email-shell { width:100% !important; }
+        .email-content { padding-left:20px !important; padding-right:20px !important; }
+        .email-cta { display:block !important; width:100% !important; padding:0 0 10px !important; }
+        .email-label { display:block !important; width:100% !important; padding-bottom:3px !important; border-bottom:0 !important; }
+        .email-value { display:block !important; width:100% !important; padding-top:0 !important; }
+      }
+    </style>
+  </head>
+  <body style="background:#ececec;margin:0;padding:0;word-spacing:normal">
+    <div style="display:none;font-size:1px;color:#ececec;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden">${escapeHtml(heading)} ricevuta dal sito Officina Belviso.</div>
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#ececec;border-collapse:collapse">
+      <tr>
+        <td align="center" style="padding:24px 12px">
+          <table class="email-shell" role="presentation" width="640" cellspacing="0" cellpadding="0" border="0" style="background:#ffffff;border-collapse:separate;border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.08);max-width:640px;overflow:hidden;width:100%">
+            <tr>
+              <td style="background:#171819;border-top:6px solid #d51f26;padding:28px 32px">
+                <p style="color:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:21px;font-weight:800;letter-spacing:.07em;line-height:1.2;margin:0 0 8px">OFFICINA BELVISO</p>
+                <h1 style="color:#f1f1f1;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:500;line-height:1.4;margin:0">${escapeHtml(heading)}</h1>
+              </td>
+            </tr>
+            <tr>
+              <td class="email-content" style="color:#4a4c4e;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.55;padding:24px 32px 28px">
+                È stata ricevuta una nuova comunicazione dal sito di Officina Belviso. I dati sono riportati di seguito.
+              </td>
+            </tr>
+            ${content}
+            <tr>
+              <td class="email-content" style="background:#f6f6f6;border-top:1px solid #e3e3e3;color:#6b6d6f;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.6;padding:20px 32px;text-align:center">
+                Richiesta inviata dal sito Officina Belviso<br>
+                <a href="https://officinabelviso.it" style="color:#d51f26;text-decoration:underline">officinabelviso.it</a>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`
 }
 
 async function parseBody(request: Request) {
@@ -231,7 +370,8 @@ function quoteEmail(body: JsonObject) {
         { label: 'Azienda', value: company },
         { label: 'Email', value: email },
         { label: 'Telefono', value: phone },
-        { label: 'Prefisso / Paese', value: `${phonePrefix} (${phonePrefixCountry})` },
+        { label: 'Paese del prefisso', value: phonePrefixCountry },
+        { label: 'Informativa privacy', value: 'Accettata' },
       ],
     },
     {
@@ -240,27 +380,43 @@ function quoteEmail(body: JsonObject) {
         { label: 'Marca', value: vehicleBrand },
         { label: 'Modello', value: vehicleModel },
         { label: 'Anno di immatricolazione', value: registrationYear },
-        { label: 'Numero di telaio (VIN)', value: vin },
         { label: 'Targa', value: licensePlate },
+        { label: 'Numero di telaio (VIN)', value: vin },
         { label: 'Veicolo marciante', value: vehicleRunning === 'yes' ? 'Sì' : 'No' },
       ],
     },
     {
-      title: 'Problema e intervento richiesto',
+      title: 'Intervento richiesto',
+      variant: 'highlight',
       rows: [
         { label: 'Tipologia di intervento', value: selectedServices.join(', ') },
+      ],
+    },
+    {
+      title: 'Descrizione del problema',
+      variant: 'highlight',
+      rows: [
         { label: 'Descrizione del problema', value: problemDescription },
-        { label: 'Privacy', value: 'Accettata' },
       ],
     },
   ]
 
-  const title = `Nuova richiesta assistenza – ${firstName} ${lastName}`
+  const title = `Nuova richiesta di assistenza — ${firstName} ${lastName}`
+  const contactActions: ContactActions = {
+    callLabel: 'Chiama il cliente',
+    firstName,
+    phone,
+    whatsappLabel: 'Scrivi su WhatsApp',
+  }
   return {
-    html: renderHtml(title, sections),
+    html: renderHtml({
+      contactActions,
+      heading: 'Nuova richiesta di assistenza',
+      sections,
+    }),
     replyTo: email,
     subject: title,
-    text: `${title}\n\n${renderText(sections)}`,
+    text: `${title}\n\n${renderText(sections)}\n\n${renderContactText(contactActions)}\n\nRichiesta inviata dal sito Officina Belviso\nofficinabelviso.it`,
     to: 'assistenza@officinabelviso.it',
   }
 }
@@ -285,24 +441,40 @@ function careerEmail(body: JsonObject) {
         { label: 'Cognome', value: lastName },
         { label: 'Email', value: email },
         { label: 'Telefono', value: phone },
+        { label: 'Informativa privacy', value: 'Accettata' },
       ],
     },
     {
       title: 'Candidatura',
       rows: [
         { label: 'Posizione di interesse', value: role },
+      ],
+    },
+    {
+      title: 'Presentazione',
+      variant: 'highlight',
+      rows: [
         { label: 'Presentazione', value: message },
-        { label: 'Privacy', value: 'Accettata' },
       ],
     },
   ]
 
-  const title = `Nuova candidatura – ${firstName} ${lastName}`
+  const title = `Nuova candidatura — ${firstName} ${lastName}`
+  const contactActions: ContactActions = {
+    callLabel: 'Chiama il candidato',
+    firstName,
+    phone,
+    whatsappLabel: 'Scrivi su WhatsApp',
+  }
   return {
-    html: renderHtml(title, sections),
+    html: renderHtml({
+      contactActions,
+      heading: 'Nuova candidatura',
+      sections,
+    }),
     replyTo: email,
     subject: title,
-    text: `${title}\n\n${renderText(sections)}`,
+    text: `${title}\n\n${renderText(sections)}\n\n${renderContactText(contactActions)}\n\nRichiesta inviata dal sito Officina Belviso\nofficinabelviso.it`,
     to: 'info@officinabelviso.it',
   }
 }
