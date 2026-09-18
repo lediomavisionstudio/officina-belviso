@@ -307,17 +307,19 @@ test.describe('privacy content and career contrast', () => {
     await expect(intro.locator('.eyebrow')).toHaveCSS('color', 'rgb(213, 31, 38)')
   })
 
-  test('renders audit-based cookie policy and an explicit privacy shell', async ({ page }) => {
+  test('renders the complete cookie and privacy policies without editorial placeholders', async ({ page }) => {
     await page.goto('/cookie-policy')
     await expect(page.getByRole('heading', { name: 'Cookie Policy', level: 1 })).toBeVisible()
     await expect(page.getByText('Google Maps Embed')).toBeVisible()
     await expect(page.getByText('Pexels Image CDN')).toBeVisible()
     await expect(page.getByText('Nessun sistema analytics è attualmente installato.')).toBeVisible()
+    await expect(page.getByText(/TODO privacy/i)).toHaveCount(0)
 
     await page.goto('/privacy-policy')
     await expect(page.getByRole('heading', { name: 'Privacy Policy', level: 1 })).toBeVisible()
-    await expect(
-      page.getByText('Da completare con l’informativa definitiva del titolare.'),
-    ).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Titolare del trattamento' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Diritti dell’interessato' })).toBeVisible()
+    await expect(page.getByText('Officina Belviso S.N.C.', { exact: false }).first()).toBeVisible()
+    await expect(page.getByText(/in preparazione|da completare|TODO privacy/i)).toHaveCount(0)
   })
 })

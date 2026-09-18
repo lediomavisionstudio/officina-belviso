@@ -108,7 +108,7 @@ export const cookieRegistry = {
       purpose: 'Mostra la posizione dell’officina tramite una mappa incorporata.',
       category: 'externalMedia',
       duration:
-        'Gestita dal fornitore; TODO: verificare periodicamente la configurazione e le durate dichiarate da Google.',
+        'La durata di eventuali cookie o tecnologie del servizio è determinata da Google secondo la propria informativa.',
       firstParty: false,
       kind: 'service',
       policyUrl: 'https://policies.google.com/privacy',
@@ -123,7 +123,7 @@ export const externalResourceAudit = [
     name: 'Pexels Image CDN',
     provider: 'Pexels, brand di Canva Germany GmbH',
     purpose:
-      'Distribuisce le fotografie temporanee utilizzate nelle sezioni del sito.',
+      'Distribuisce alcune fotografie visualizzate nelle sezioni del sito.',
     category: 'external-resource',
     duration: 'Nessuna durata di storage applicativo rilevata nel browser.',
     firstParty: false,
@@ -135,7 +135,7 @@ export const externalResourceAudit = [
 
 export const cookiePolicyMetadata = {
   version: CONSENT_VERSION,
-  updatedAt: '2 settembre 2026',
+  updatedAt: '18 settembre 2026',
 } as const
 
 export function createConsent(

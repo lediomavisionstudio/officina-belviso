@@ -23,6 +23,35 @@ for (const viewport of [
     await expect(quoteForm.getByText('1/4 fotografie')).toBeVisible()
 
     const careerForm = page.getByRole('form', { name: 'Modulo per inviare una candidatura' })
+    const quotePhone = quoteForm.locator('.form-phone')
+    const careerPhone = careerForm.locator('.form-phone')
+    await expect(quotePhone).toHaveCount(1)
+    await expect(careerPhone).toHaveCount(1)
+    await expect(careerForm.locator('[name="phonePrefix"]')).toHaveValue('+39')
+    await quoteForm.locator('[name="phoneNumber"]').fill('abc1234567890123')
+    await careerForm.locator('[name="phoneNumber"]').fill('abc1234567890123')
+    await expect(careerForm.locator('[name="phoneNumber"]')).toHaveValue(
+      await quoteForm.locator('[name="phoneNumber"]').inputValue(),
+    )
+    await careerForm.locator('[name="phoneNumber"]').fill('1234567890')
+    await careerForm.locator('[name="phonePrefixCountry"]').selectOption('FR')
+    await expect(careerForm.locator('[name="phonePrefix"]')).toHaveValue('+33')
+    await expect(careerForm.locator('[name="phone"]')).toHaveValue('+331234567890')
+    const phoneLayouts = await Promise.all([quotePhone, careerPhone].map((field) =>
+      field.evaluate((element) => {
+        const controls = element.querySelector<HTMLElement>('.form-phone__controls')
+        const bounds = controls?.getBoundingClientRect()
+        return {
+          columns: controls ? getComputedStyle(controls).gridTemplateColumns : '',
+          prefixColumn: controls ? getComputedStyle(controls).gridTemplateColumns.split(' ')[0] : '',
+          overflow: bounds ? bounds.right > innerWidth : true,
+        }
+      }),
+    ))
+    expect(phoneLayouts[1].prefixColumn).toBe(phoneLayouts[0].prefixColumn)
+    expect(phoneLayouts[1].columns).not.toBe('')
+    expect(phoneLayouts[1].overflow).toBe(false)
+
     const cv = careerForm.locator('input[type="file"]')
     await cv.setInputFiles({
       name: 'curriculum.pdf',

@@ -36,7 +36,10 @@ function careerFields() {
     firstName: 'Anna',
     lastName: 'Bianchi',
     email: 'anna@example.com',
-    phone: '3331234567',
+    phonePrefix: '+39',
+    phonePrefixCountry: 'IT',
+    phoneNumber: '3331234567',
+    phone: '+393331234567',
     role: 'Meccanico',
     message: 'Candidatura spontanea.',
     privacy: true,
@@ -148,6 +151,9 @@ await run('candidatura con PDF valido', async () => {
   const response = await worker.fetch(request('/api/careers', multipart(careerFields(), [{ field: 'cv', file }])), env())
   equal(response.status, 200, 'status')
   equal(resendPayload.attachments[0].filename, 'curriculum.pdf', 'nome CV')
+  assert(resendPayload.html.includes('+393331234567'), 'telefono completo in email')
+  assert(resendPayload.html.includes('tel:+393331234567'), 'CTA telefono candidatura')
+  assert(resendPayload.html.includes('https://wa.me/393331234567?text='), 'CTA WhatsApp candidatura')
 })
 
 await run('candidatura con file non PDF rifiutata', async () => {

@@ -80,7 +80,7 @@ export function CookiePolicyPage() {
                             </dd>
                             {entry.policyUrl ? (
                               <dd>
-                                <a href={entry.policyUrl} target="_blank" rel="noreferrer">
+                                <a href={entry.policyUrl} target="_blank" rel="noopener noreferrer">
                                   Informativa del provider
                                 </a>
                               </dd>
@@ -104,17 +104,20 @@ export function CookiePolicyPage() {
             <p>
               Google Maps viene caricato soltanto dopo l’autorizzazione alla
               categoria “Contenuti esterni”. Prima della scelta viene mostrato
-              un placeholder locale.
+              un contenuto informativo locale, senza collegamenti al servizio
+              Google.
             </p>
           </section>
 
           <section>
             <h2>Risorse esterne senza storage rilevato</h2>
             <p>
-              L’audit del codice e del browser ha rilevato le seguenti risorse
-              di terza parte. Non sono tracker installati dal sito e non è stato
-              osservato storage applicativo associato, ma la richiesta di rete
-              comunica al fornitore dati tecnici come l’indirizzo IP.
+              L’audit del codice ha rilevato le seguenti risorse di terza parte,
+              che non risultano impiegate dal sito per analytics o
+              profilazione. Il caricamento genera comunque una richiesta di
+              rete e può comunicare al fornitore dati tecnici come l’indirizzo
+              IP. Non è stato rilevato storage applicativo impostato
+              direttamente dal sito per queste risorse.
             </p>
             <div className="policy-registry">
               {externalResourceAudit.map((entry) => (
@@ -138,7 +141,7 @@ export function CookiePolicyPage() {
                       <dd>{entry.storageDetected ? 'Sì' : 'No'}</dd>
                       <dt>Informativa</dt>
                       <dd>
-                        <a href={entry.policyUrl} target="_blank" rel="noreferrer">
+                        <a href={entry.policyUrl} target="_blank" rel="noopener noreferrer">
                           Informativa del provider
                         </a>
                       </dd>
@@ -150,18 +153,11 @@ export function CookiePolicyPage() {
           </section>
 
           <section>
-            <h2>Revoca e verifica finale</h2>
+            <h2>Revoca del consenso</h2>
             <p>
               Puoi riaprire il centro preferenze dal link “Gestisci cookie” nel
               footer. La disattivazione dei contenuti esterni impedisce nuovi
               caricamenti e rimuove la mappa già montata dalla pagina.
-            </p>
-            <p className="policy-page__todo">
-              TODO privacy: verificare con il titolare o il consulente la
-              versione definitiva dell’informativa, le basi giuridiche, i
-              trasferimenti e le durate dichiarate dai provider terzi. Valutare
-              inoltre la sostituzione degli URL Pexels con asset locali prima
-              della pubblicazione definitiva.
             </p>
           </section>
         </Container>

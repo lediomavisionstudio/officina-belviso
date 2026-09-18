@@ -311,12 +311,17 @@ test.describe('Home V2', () => {
     await expect(section.getByText('4,9 / 5')).toBeVisible()
     await expect(section.getByText('Basato su 29 recensioni Google')).toBeVisible()
 
-    const nextReview = section.getByRole('button', { name: 'Recensione successiva' })
-    await nextReview.click()
-    await expect(section.getByText(/Seconda recensione dimostrativa/)).toBeVisible()
+    await expect(section.getByText('Vito Giuliano')).toBeVisible()
+    await expect(section.getByText(/Sei un autista di mezzi pesanti/)).toBeVisible()
+    await expect(section.getByText(/recensione dimostrativa|Nome cliente|recensioni Google verificate/)).toHaveCount(0)
 
-    await expect(section.getByRole('button', { name: 'Leggi tutte le recensioni' })).toBeDisabled()
-    await expect(section.getByRole('button', { name: 'Scrivi una recensione' })).toBeDisabled()
+    const reviewsLink = section.getByRole('link', { name: 'Leggi tutte le recensioni' })
+    const writeReviewLink = section.getByRole('link', { name: 'Scrivi una recensione' })
+    for (const googleLink of [reviewsLink, writeReviewLink]) {
+      await expect(googleLink).toHaveAttribute('href', /google\.com\/maps\/search/)
+      await expect(googleLink).toHaveAttribute('target', '_blank')
+      await expect(googleLink).toHaveAttribute('rel', 'noopener noreferrer')
+    }
     const mapsLink = section.getByRole('link', { name: 'Apri in Maps' })
     await expect(mapsLink).toHaveAttribute(
       'href',
@@ -993,13 +998,50 @@ test.describe('Home V2', () => {
   })
 
   test('transitions Google reviews only after explicit user input', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' })
     await page.goto('/')
 
     const reviews = page.locator('.google-reviews')
+    const review = reviews.locator('.google-review')
+    const controls = reviews.locator('.google-reviews__controls')
+    const previous = reviews.getByRole('button', { name: 'Recensione precedente' })
+    const next = reviews.getByRole('button', { name: 'Recensione successiva' })
     await reviews.scrollIntoViewIfNeeded()
-    await reviews.getByRole('button', { name: 'Recensione successiva' }).click()
-    await expect(reviews.locator('.google-review')).toContainText('Seconda recensione')
-    await expect(reviews.locator('.google-reviews__controls')).toContainText('2 / 3')
+
+    await expect(review).toContainText('Vito Giuliano')
+    await expect(review).toContainText(
+      "Sei un autista di mezzi pesanti? Vuoi che il tuo mezzo sia affidabile per ogni viaggio? Bene sei nei posto giusto, troverai all'interno di questa officina …",
+    )
+    await expect(controls).toContainText('1 / 3')
+    await expect(review.getByRole('img', { name: '5 stelle su 5' })).toHaveText('★★★★★')
+
+    await next.click()
+    await expect(review).toContainText('Mark Belvis')
+    await expect(review).toContainText(
+      'Grande officina con grandi lavoratori:Pino,Enzo,Nico e Gabriele Belviso. Andate forti.Da Marco!!!',
+    )
+    await expect(controls).toContainText('2 / 3')
+
+    await next.click()
+    await expect(review).toContainText('Davide Ricci')
+    await expect(review).toContainText('Personale serio rapido ed efficiente')
+    await expect(controls).toContainText('3 / 3')
+
+    await next.click()
+    await expect(review).toContainText('Vito Giuliano')
+    await expect(controls).toContainText('1 / 3')
+
+    await previous.click()
+    await expect(review).toContainText('Davide Ricci')
+    await expect(controls).toContainText('3 / 3')
+
+    await previous.click()
+    await expect(review).toContainText('Mark Belvis')
+    await expect(controls).toContainText('2 / 3')
+
+    await previous.click()
+    await expect(review).toContainText('Vito Giuliano')
+    await expect(controls).toContainText('1 / 3')
   })
 
   test('keeps content and active navigation stable after a mid-page refresh and fast scroll', async ({ page }) => {

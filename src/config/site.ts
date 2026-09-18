@@ -1,5 +1,8 @@
 import type { SiteConfig } from '../types/site'
 
+const googleReviewsUrl =
+  'https://www.google.com/maps/search/?api=1&query=Officina%20Belviso%20S.N.C.%2C%20Viale%20Sindaco%20Gerardo%20Decaro%209%2F11%2C%2070016%20Noicattaro%20BA'
+
 export const siteConfig = {
   name: 'Officina Belviso',
   description:
@@ -42,23 +45,23 @@ export const siteConfig = {
   googleBusiness: {
     rating: 4.9,
     reviewCount: 29,
-    profileUrl: null,
-    writeReviewUrl: null,
+    profileUrl: googleReviewsUrl,
+    writeReviewUrl: googleReviewsUrl,
     reviews: [
       {
+        author: 'Vito Giuliano',
         rating: 5,
-        text: 'Testo della recensione Google da sostituire con il contenuto verificato del profilo.',
-        author: 'Nome cliente',
+        text: 'Sei un autista di mezzi pesanti? Vuoi che il tuo mezzo sia affidabile per ogni viaggio? Bene sei nei posto giusto, troverai all\'interno di questa officina …',
       },
       {
+        author: 'Mark Belvis',
         rating: 5,
-        text: 'Seconda recensione dimostrativa, predisposta per un aggiornamento manuale o tramite API.',
-        author: 'Nome cliente',
+        text: 'Grande officina con grandi lavoratori:Pino,Enzo,Nico e Gabriele Belviso. Andate forti.Da Marco!!!',
       },
       {
+        author: 'Davide Ricci',
         rating: 5,
-        text: 'Terza recensione dimostrativa da sostituire con una testimonianza pubblicata su Google.',
-        author: 'Nome cliente',
+        text: 'Personale serio rapido ed efficiente',
       },
     ],
   },

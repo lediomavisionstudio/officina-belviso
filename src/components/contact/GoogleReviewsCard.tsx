@@ -14,7 +14,7 @@ type GoogleReviewsCardProps = {
 function GoogleAction({ href, children }: { href: string | null; children: string }) {
   if (href) {
     return (
-      <ButtonLink href={href} target="_blank" rel="noreferrer" size="small" variant="outline">
+      <ButtonLink href={href} target="_blank" rel="noopener noreferrer" size="small" variant="outline">
         {children}
       </ButtonLink>
     )
@@ -48,6 +48,7 @@ export function GoogleReviewsCard({
   )
   const review = reviews[activeReview]
   const visibleStars = review ? Math.min(5, Math.max(0, Math.round(review.rating))) : 0
+  const aggregateStars = Math.min(5, Math.max(0, Math.round(rating)))
 
   return (
     <section
@@ -67,49 +68,65 @@ export function GoogleReviewsCard({
         </div>
       </div>
 
-      {review ? (
-        <div className="google-reviews__carousel" aria-live="polite">
-          <article className="google-review" key={activeReview}>
+      <div className="google-reviews__carousel" aria-live="polite">
+        <article className="google-review" key={review ? activeReview : 'empty'}>
+          {review ? (
+            <>
             <span className="google-review__stars" aria-label={`${review.rating} stelle su 5`} role="img">
               {'★'.repeat(visibleStars)}
             </span>
             <blockquote>{review.text}</blockquote>
             <p>{review.author}</p>
-          </article>
-          {reviews.length > 1 ? (
-            <div className="google-reviews__controls">
-              <span aria-hidden="true">{activeReview + 1} / {reviews.length}</span>
-              <div>
-                <Button
-                  type="button"
-                  size="small"
-                  variant="ghost"
-                  aria-label="Recensione precedente"
-                  disabled={activeReview === 0}
-                  onClick={() => changeReview(Math.max(0, activeReview - 1))}
-                >
-                  ←
-                </Button>
-                <Button
-                  type="button"
-                  size="small"
-                  variant="ghost"
-                  aria-label="Recensione successiva"
-                  disabled={activeReview === reviews.length - 1}
-                  onClick={() =>
-                    changeReview(Math.min(reviews.length - 1, activeReview + 1))
-                  }
-                >
-                  →
-                </Button>
-              </div>
+            </>
+          ) : (
+            <>
+              <span className="google-review__stars" aria-label={`${rating} stelle su 5`} role="img">
+                {'★'.repeat(aggregateStars)}
+              </span>
+              <blockquote>
+                Le recensioni dei clienti sono disponibili sulla scheda Google pubblica di Officina Belviso.
+              </blockquote>
+              <p>{reviewCount} recensioni Google verificate</p>
+            </>
+          )}
+        </article>
+        {reviews.length !== 1 ? (
+          <div className="google-reviews__controls">
+            <span aria-hidden="true">
+              {review ? `${activeReview + 1} / ${reviews.length}` : `${reviewCount} recensioni`}
+            </span>
+            <div>
+              <Button
+                type="button"
+                size="small"
+                variant="ghost"
+                aria-label="Recensione precedente"
+                disabled={!review}
+                onClick={() =>
+                  changeReview((activeReview - 1 + reviews.length) % reviews.length)
+                }
+              >
+                ←
+              </Button>
+              <Button
+                type="button"
+                size="small"
+                variant="ghost"
+                aria-label="Recensione successiva"
+                disabled={!review}
+                onClick={() =>
+                  changeReview((activeReview + 1) % reviews.length)
+                }
+              >
+                →
+              </Button>
             </div>
-          ) : null}
-        </div>
-      ) : null}
+          </div>
+        ) : null}
+      </div>
 
       <p className="google-reviews__status" id="google-business-link-status">
-        Il collegamento al profilo Google Business verrà attivato dopo la configurazione.
+        I collegamenti aprono la scheda Google pubblica di Officina Belviso in una nuova scheda.
       </p>
       <div className="google-reviews__actions">
         <GoogleAction href={profileUrl}>Leggi tutte le recensioni</GoogleAction>

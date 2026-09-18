@@ -61,7 +61,7 @@ const requiredByMode: Record<ContactFormMode, string[]> = {
     'problemDescription',
     'privacy',
   ],
-  career: ['firstName', 'lastName', 'email', 'phone', 'privacy'],
+  career: ['firstName', 'lastName', 'email', 'phoneNumber', 'privacy'],
 }
 
 const requiredMessage: Record<string, string> = {
@@ -93,17 +93,9 @@ function validateForm(data: FormData, mode: ContactFormMode) {
     errors.email = 'Inserisci un indirizzo email valido.'
   }
 
-  if (mode === 'quote') {
-    const phoneNumber = valueOf(data, 'phoneNumber')
-    if (phoneNumber && !/^\d{6,10}$/.test(phoneNumber)) {
-      errors.phoneNumber = 'Inserisci un numero compreso tra 6 e 10 cifre.'
-    }
-  } else {
-    const phone = valueOf(data, 'phone')
-    const phoneDigits = phone.replace(/\D/g, '')
-    if (phone && (!/^[+\d\s()./-]+$/.test(phone) || phoneDigits.length < 6)) {
-      errors.phone = 'Inserisci un numero di telefono valido.'
-    }
+  const phoneNumber = valueOf(data, 'phoneNumber')
+  if (phoneNumber && !/^\d{6,10}$/.test(phoneNumber)) {
+    errors.phoneNumber = 'Inserisci un numero compreso tra 6 e 10 cifre.'
   }
 
   const registrationYear = valueOf(data, 'registrationYear')
@@ -255,6 +247,9 @@ export function ContactForm({ mode }: ContactFormProps) {
           firstName: valueOf(formData, 'firstName'),
           lastName: valueOf(formData, 'lastName'),
           email: valueOf(formData, 'email'),
+          phonePrefix: valueOf(formData, 'phonePrefix'),
+          phonePrefixCountry: valueOf(formData, 'phonePrefixCountry'),
+          phoneNumber: valueOf(formData, 'phoneNumber'),
           phone: valueOf(formData, 'phone'),
           role: valueOf(formData, 'role'),
           message: valueOf(formData, 'message'),
@@ -360,44 +355,29 @@ export function ContactForm({ mode }: ContactFormProps) {
           error={errors.email}
           required={mode === 'career'}
         />
-        {mode === 'quote' ? (
-          <>
-            <input name="phonePrefix" type="hidden" value={phonePrefix.dialCode} />
-            <input name="phone" type="hidden" value={`${phonePrefix.dialCode}${phoneNumber}`} />
-            <PhoneInput
-              id={id('phoneNumber')}
-              prefixId={id('phonePrefixCountry')}
-              prefixName="phonePrefixCountry"
-              label="Telefono"
-              prefixOptions={phonePrefixOptions}
-              prefixValue={phonePrefix.value}
-              numberName="phoneNumber"
-              numberValue={phoneNumber}
-              onPrefixChange={(event) => {
-                const nextPrefix = phonePrefixOptions.find(
-                  (option) => option.value === event.currentTarget.value,
-                )
-                if (nextPrefix) setPhonePrefix(nextPrefix)
-              }}
-              onNumberChange={(event) => {
-                setPhoneNumber(event.currentTarget.value.replace(/\D/g, '').slice(0, 10))
-              }}
-              error={errors.phoneNumber}
-              required
-            />
-          </>
-        ) : (
-          <Input
-            id={id('phone')}
-            name="phone"
-            label="Telefono"
-            type="tel"
-            inputMode="tel"
-            autoComplete="tel"
-            error={errors.phone}
-            required
-          />
-        )}
+        <input name="phonePrefix" type="hidden" value={phonePrefix.dialCode} />
+        <input name="phone" type="hidden" value={`${phonePrefix.dialCode}${phoneNumber}`} />
+        <PhoneInput
+          id={id('phoneNumber')}
+          prefixId={id('phonePrefixCountry')}
+          prefixName="phonePrefixCountry"
+          label="Telefono"
+          prefixOptions={phonePrefixOptions}
+          prefixValue={phonePrefix.value}
+          numberName="phoneNumber"
+          numberValue={phoneNumber}
+          onPrefixChange={(event) => {
+            const nextPrefix = phonePrefixOptions.find(
+              (option) => option.value === event.currentTarget.value,
+            )
+            if (nextPrefix) setPhonePrefix(nextPrefix)
+          }}
+          onNumberChange={(event) => {
+            setPhoneNumber(event.currentTarget.value.replace(/\D/g, '').slice(0, 10))
+          }}
+          error={errors.phoneNumber}
+          required
+        />
       </fieldset>
 
       {mode === 'quote' ? (

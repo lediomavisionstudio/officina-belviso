@@ -575,11 +575,23 @@ function careerEmail(body: JsonObject, attachments: ValidatedAttachment[]) {
   const firstName = stringField(body, 'firstName', 80, { required: true })
   const lastName = stringField(body, 'lastName', 80, { required: true })
   const email = stringField(body, 'email', 254, { required: true })
-  const phone = stringField(body, 'phone', 32, { required: true })
+  const submittedPhone = stringField(body, 'phone', 32, { required: true })
+  const phonePrefix = stringField(body, 'phonePrefix', 8)
+  const phonePrefixCountry = stringField(body, 'phonePrefixCountry', 3)
+  const phoneNumber = stringField(body, 'phoneNumber', 10)
   const role = stringField(body, 'role', 120)
   const message = stringField(body, 'message', 5000, { multiline: true })
 
   validEmail(email, true)
+  const hasStructuredPhone = Boolean(phonePrefix || phonePrefixCountry || phoneNumber)
+  if (hasStructuredPhone) {
+    if (!/^\+\d{1,4}$/.test(phonePrefix) || !/^[A-Z]{2}$/.test(phonePrefixCountry)) {
+      throw new RequestError(400)
+    }
+    if (!/^\d{6,10}$/.test(phoneNumber)) throw new RequestError(400)
+    if (submittedPhone !== `${phonePrefix}${phoneNumber}`) throw new RequestError(400)
+  }
+  const phone = hasStructuredPhone ? `${phonePrefix}${phoneNumber}` : submittedPhone
   validPhone(phone)
   requiredConsent(body)
 
