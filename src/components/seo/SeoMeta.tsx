@@ -39,6 +39,18 @@ export function SeoMeta({ metadata }: SeoMetaProps) {
       property: 'og:description',
       content: metadata.openGraph?.description ?? metadata.description,
     })
+    upsertMeta('meta[property="og:type"]', {
+      property: 'og:type',
+      content: 'website',
+    })
+    upsertMeta('meta[property="og:locale"]', {
+      property: 'og:locale',
+      content: 'it_IT',
+    })
+    upsertMeta('meta[property="og:site_name"]', {
+      property: 'og:site_name',
+      content: siteConfig.name,
+    })
     upsertMeta('meta[name="twitter:card"]', {
       name: 'twitter:card',
       content: metadata.twitter?.card ?? 'summary',

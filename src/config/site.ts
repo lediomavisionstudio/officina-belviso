@@ -7,7 +7,7 @@ export const siteConfig = {
   name: 'Officina Belviso',
   description:
     'Manutenzione e riparazione per veicoli industriali, con attenzione alla sicurezza e alla continuità operativa.',
-  siteUrl: null,
+  siteUrl: 'https://officinabelviso.it',
   business: {
     fiscalCode: '033776520726',
     vatNumber: '033776520726',

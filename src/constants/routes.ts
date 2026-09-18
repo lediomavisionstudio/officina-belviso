@@ -90,21 +90,21 @@ export const appRoutes = [
     path: '/privacy-policy',
     component: 'privacyPolicy',
     pageTitle: 'Privacy policy',
-    seo: futurePageSeo(
-      'Privacy policy',
-      'Informativa privacy di Officina Belviso.',
-      '/privacy-policy',
-    ),
+    seo: {
+      title: 'Privacy policy | Officina Belviso',
+      description: 'Informativa privacy di Officina Belviso.',
+      canonicalPath: '/privacy-policy',
+    },
   },
   {
     path: '/cookie-policy',
     component: 'cookiePolicy',
     pageTitle: 'Cookie policy',
-    seo: futurePageSeo(
-      'Cookie policy',
-      'Informativa cookie di Officina Belviso.',
-      '/cookie-policy',
-    ),
+    seo: {
+      title: 'Cookie policy | Officina Belviso',
+      description: 'Informativa cookie di Officina Belviso.',
+      canonicalPath: '/cookie-policy',
+    },
   },
   {
     path: '/404',
