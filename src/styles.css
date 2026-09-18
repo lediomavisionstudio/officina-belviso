@@ -2177,6 +2177,7 @@ section[id] {
 
 .form-upload__placeholder {
   display: flex;
+  width: 100%;
   min-height: 88px;
   align-items: center;
   gap: var(--space-4);
@@ -2185,6 +2186,11 @@ section[id] {
   border-radius: var(--radius-control);
   color: var(--ink-soft);
   background: var(--field-background);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  appearance: none;
+  -webkit-appearance: none;
   transition:
     border-color 300ms var(--easing-standard),
     background-color 300ms var(--easing-standard),
@@ -2192,7 +2198,7 @@ section[id] {
     transform 300ms var(--easing-standard);
 }
 
-.form-upload__placeholder > span {
+.form-upload__placeholder > span:first-child {
   display: grid;
   width: 34px;
   height: 34px;
@@ -2204,20 +2210,103 @@ section[id] {
   transition: transform 300ms var(--easing-standard);
 }
 
-.form-upload:hover .form-upload__placeholder {
+.form-upload__placeholder:not(:disabled):hover,
+.form-upload__placeholder:not(:disabled):focus-visible {
   border-color: rgb(159 0 15 / 42%);
   background: var(--white);
   box-shadow: 0 14px 30px rgb(23 24 25 / 7%);
   transform: translateY(-3px);
 }
 
-.form-upload:hover .form-upload__placeholder > span {
+.form-upload__placeholder:not(:disabled):hover > span:first-child,
+.form-upload__placeholder:not(:disabled):focus-visible > span:first-child {
   transform: rotate(3deg) scale(1.08);
 }
 
-.form-upload__placeholder p {
+.form-upload__placeholder strong,
+.form-upload__placeholder small {
+  display: block;
+}
+
+.form-upload__placeholder strong {
+  color: var(--ink);
+  font-size: 0.82rem;
+  font-weight: 650;
+}
+
+.form-upload__placeholder small {
+  margin-top: 3px;
   font-size: 0.8rem;
   line-height: 1.5;
+}
+
+.form-upload__placeholder:disabled {
+  cursor: not-allowed;
+  opacity: 0.66;
+}
+
+.form-upload__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  border: 0;
+  margin: -1px;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.form-upload__summary {
+  display: grid;
+  gap: 8px;
+  color: var(--ink-soft);
+  font-size: 0.76rem;
+}
+
+.form-upload__summary ul {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.form-upload__summary li {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 11px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--field-background);
+}
+
+.form-upload__summary li > span {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ink);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.form-upload__summary button {
+  flex: 0 0 auto;
+  padding: 0;
+  border: 0;
+  color: var(--red);
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+}
+
+.form-upload__summary button:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
 }
 
 .form-field input:not([type='radio']):not([type='checkbox']):disabled,

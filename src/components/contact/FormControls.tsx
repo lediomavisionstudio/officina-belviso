@@ -429,21 +429,92 @@ export function Checkbox({
 }
 
 type UploadFieldProps = {
+  accept: string
   description: string
+  disabled?: boolean
+  error?: string
+  files: File[]
   id: string
   label: string
+  maxFiles: number
+  name: string
+  onFilesChange: (files: File[]) => void
+  onRemove: (index: number) => void
 }
 
-export function UploadField({ description, id, label }: UploadFieldProps) {
+export function UploadField({
+  accept,
+  description,
+  disabled,
+  error,
+  files,
+  id,
+  label,
+  maxFiles,
+  name,
+  onFilesChange,
+  onRemove,
+}: UploadFieldProps) {
+  const inputRef = useRef<HTMLInputElement>(null)
+  const fileCountLabel = `${files.length}/${maxFiles} ${maxFiles === 1 ? 'file' : 'fotografie'}`
+
   return (
-    <div className="form-field form-upload" role="group" aria-labelledby={`${id}-label`}>
+    <div
+      className="form-field form-upload"
+      data-form-field={name}
+      role="group"
+      aria-labelledby={`${id}-label`}
+    >
       <span className="form-upload__label" id={`${id}-label`}>
         {label}
       </span>
-      <div className="form-upload__placeholder">
+      <input
+        ref={inputRef}
+        accept={accept}
+        aria-describedby={descriptionIds(id, description, error)}
+        className="form-upload__input"
+        disabled={disabled}
+        id={id}
+        multiple={maxFiles > 1}
+        onChange={(event) => {
+          onFilesChange(Array.from(event.currentTarget.files ?? []))
+          event.currentTarget.value = ''
+        }}
+        type="file"
+      />
+      <button
+        className="form-upload__placeholder"
+        disabled={disabled || files.length >= maxFiles}
+        onClick={() => inputRef.current?.click()}
+        type="button"
+      >
         <span aria-hidden="true">+</span>
-        <p>{description}</p>
+        <span>
+          <strong>{files.length >= maxFiles ? 'Limite raggiunto' : 'Seleziona dal dispositivo'}</strong>
+          <small id={`${id}-help`}>{description}</small>
+        </span>
+      </button>
+      <div className="form-upload__summary" aria-live="polite">
+        <span>{fileCountLabel}</span>
+        {files.length > 0 ? (
+          <ul>
+            {files.map((file, index) => (
+              <li key={`${file.name}-${file.size}-${file.lastModified}-${index}`}>
+                <span title={file.name}>{file.name}</span>
+                <button
+                  aria-label={`Rimuovi ${file.name}`}
+                  disabled={disabled}
+                  onClick={() => onRemove(index)}
+                  type="button"
+                >
+                  Rimuovi
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : null}
       </div>
+      <FieldSupport id={id} error={error} />
     </div>
   )
 }

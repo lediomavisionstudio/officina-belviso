@@ -9,6 +9,21 @@ interface Env {
 
 type JsonObject = Record<string, unknown>
 
+type SubmittedFile = {
+  fieldName: string
+  file: File
+}
+
+type ValidatedAttachment = {
+  file: File
+  filename: string
+}
+
+type ParsedSubmission = {
+  fields: JsonObject
+  files: SubmittedFile[]
+}
+
 type EmailRow = {
   label: string
   value: string
@@ -24,6 +39,7 @@ type ContactActions = {
   callLabel: string
   firstName: string
   phone: string
+  whatsappMessage: string
   whatsappLabel: string
 }
 
@@ -33,6 +49,7 @@ type PhoneLinks = {
 }
 
 type EmailTemplateOptions = {
+  automatedMessage: string
   contactActions?: ContactActions
   heading: string
   sections: EmailSection[]
@@ -49,7 +66,17 @@ class RequestError extends Error {
 
 const RESEND_ENDPOINT = 'https://api.resend.com/emails'
 const EMAIL_FROM = 'Officina Belviso <sito@officinabelviso.it>'
-const MAX_BODY_BYTES = 32 * 1024
+const MAX_JSON_BODY_BYTES = 32 * 1024
+const MAX_MULTIPART_QUOTE_BYTES = 18 * 1024 * 1024
+const MAX_MULTIPART_CAREER_BYTES = 6 * 1024 * 1024
+const MAX_PHOTO_FILES = 4
+const MAX_PHOTO_BYTES = 4 * 1024 * 1024
+const MAX_CV_BYTES = 5 * 1024 * 1024
+const IMAGE_TYPES = new Map([
+  ['image/jpeg', new Set(['jpg', 'jpeg'])],
+  ['image/png', new Set(['png'])],
+  ['image/webp', new Set(['webp'])],
+])
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const quoteServiceLabels = new Set([
   'Impianto frenante',
@@ -116,7 +143,9 @@ function stringField(
 }
 
 function requiredConsent(body: JsonObject) {
-  if (body.privacy !== true) throw new RequestError(400)
+  if (body.privacy !== true && body.privacy !== 'true' && body.privacy !== 'on') {
+    throw new RequestError(400)
+  }
 }
 
 function validEmail(email: string, required: boolean) {
@@ -160,25 +189,30 @@ function renderText(sections: EmailSection[]) {
     .join('\n\n')
 }
 
-function createPhoneLinks(phone: string, firstName: string): PhoneLinks | null {
+export function createPhoneLinks(
+  phone: string,
+  firstName: string,
+  whatsappMessage = `Buongiorno ${firstName}, ti contattiamo da Officina Belviso.`,
+): PhoneLinks | null {
   let digits = phone.replace(/\D/g, '')
-  if (phone.trim().startsWith('00')) digits = digits.slice(2)
+  const trimmedPhone = phone.trim()
+  if (trimmedPhone.startsWith('00')) digits = digits.slice(2)
   if (digits.length < 6 || digits.length > 18) return null
 
-  const telNumber = phone.trim().startsWith('+') || phone.trim().startsWith('00')
-    ? `+${digits}`
-    : digits
-  const message = `Buongiorno ${firstName}, ti contattiamo in merito alla richiesta inviata dal sito di Officina Belviso.`
-
+  const internationalDigits = trimmedPhone.startsWith('+') || trimmedPhone.startsWith('00')
+    ? digits
+    : digits.startsWith('39') && digits.length >= 11
+      ? digits
+      : `39${digits}`
   return {
-    telUrl: `tel:${telNumber}`,
-    whatsappUrl: `https://wa.me/${digits}?text=${encodeURIComponent(message)}`,
+    telUrl: `tel:+${internationalDigits}`,
+    whatsappUrl: `https://wa.me/${internationalDigits}?text=${encodeURIComponent(whatsappMessage)}`,
   }
 }
 
-function renderContactActions(actions?: ContactActions) {
+export function renderContactActions(actions?: ContactActions) {
   if (!actions?.phone) return ''
-  const links = createPhoneLinks(actions.phone, actions.firstName)
+  const links = createPhoneLinks(actions.phone, actions.firstName, actions.whatsappMessage)
   if (!links) return ''
 
   return `
@@ -201,7 +235,7 @@ function renderContactActions(actions?: ContactActions) {
 
 function renderContactText(actions?: ContactActions) {
   if (!actions?.phone) return ''
-  const links = createPhoneLinks(actions.phone, actions.firstName)
+  const links = createPhoneLinks(actions.phone, actions.firstName, actions.whatsappMessage)
   if (!links) return ''
   return [
     'CONTATTO RAPIDO',
@@ -237,7 +271,7 @@ function renderSection(section: EmailSection) {
     </tr>`
 }
 
-function renderHtml({ contactActions, heading, sections }: EmailTemplateOptions) {
+function renderHtml({ automatedMessage, contactActions, heading, sections }: EmailTemplateOptions) {
   const content = sections
     .map((section, index) => `${renderSection(section)}${index === 0 ? renderContactActions(contactActions) : ''}`)
     .join('')
@@ -279,7 +313,10 @@ function renderHtml({ contactActions, heading, sections }: EmailTemplateOptions)
             ${content}
             <tr>
               <td class="email-content" style="background:#f6f6f6;border-top:1px solid #e3e3e3;color:#6b6d6f;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.6;padding:20px 32px;text-align:center">
-                Richiesta inviata dal sito Officina Belviso<br>
+                <strong style="color:#171819">Officina Belviso</strong><br>
+                Viale Sindaco Gerardo De Caro 9/11, Zona P.I.P.<br>
+                70016 Noicattaro (BA)<br><br>
+                ${escapeHtml(automatedMessage)}<br>
                 <a href="https://officinabelviso.it" style="color:#d51f26;text-decoration:underline">officinabelviso.it</a>
               </td>
             </tr>
@@ -291,33 +328,136 @@ function renderHtml({ contactActions, heading, sections }: EmailTemplateOptions)
 </html>`
 }
 
-async function parseBody(request: Request) {
-  const contentType = request.headers.get('Content-Type')?.split(';', 1)[0].trim().toLowerCase()
-  if (contentType !== 'application/json') throw new RequestError(415)
-
-  const contentLength = Number(request.headers.get('Content-Length') ?? 0)
-  if (Number.isFinite(contentLength) && contentLength > MAX_BODY_BYTES) {
-    throw new RequestError(413)
-  }
-
-  const text = await request.text()
-  if (new TextEncoder().encode(text).byteLength > MAX_BODY_BYTES) {
-    throw new RequestError(413)
-  }
-
-  try {
-    const parsed: unknown = JSON.parse(text)
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-      throw new RequestError(400)
-    }
-    return parsed as JsonObject
-  } catch (error) {
-    if (error instanceof RequestError) throw error
-    throw new RequestError(400)
-  }
+function extensionOf(filename: string) {
+  const extension = filename.split('.').pop()?.toLowerCase() ?? ''
+  return /^[a-z0-9]{1,8}$/.test(extension) ? extension : ''
 }
 
-function quoteEmail(body: JsonObject) {
+function sanitizeFilename(filename: string) {
+  const basename = filename.split(/[\\/]/).pop() ?? 'allegato'
+  const withoutControls = [...basename]
+    .map((character) => {
+      const codePoint = character.codePointAt(0) ?? 0
+      return codePoint < 32 || codePoint === 127 ? '' : character
+    })
+    .join('')
+  const cleaned = withoutControls
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^A-Za-z0-9._ -]/g, '_')
+    .replace(/\s+/g, ' ')
+    .replace(/\.{2,}/g, '.')
+    .trim()
+    .slice(0, 120)
+  return cleaned && cleaned !== '.' ? cleaned : 'allegato'
+}
+
+function startsWithBytes(bytes: Uint8Array, signature: number[]) {
+  return signature.every((value, index) => bytes[index] === value)
+}
+
+async function hasExpectedSignature(file: File) {
+  const bytes = new Uint8Array(await file.slice(0, 12).arrayBuffer())
+  if (file.type === 'image/jpeg') return startsWithBytes(bytes, [0xff, 0xd8, 0xff])
+  if (file.type === 'image/png') {
+    return startsWithBytes(bytes, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
+  }
+  if (file.type === 'image/webp') {
+    return startsWithBytes(bytes, [0x52, 0x49, 0x46, 0x46])
+      && startsWithBytes(bytes.slice(8), [0x57, 0x45, 0x42, 0x50])
+  }
+  if (file.type === 'application/pdf') {
+    return startsWithBytes(bytes, [0x25, 0x50, 0x44, 0x46, 0x2d])
+  }
+  return false
+}
+
+async function validateAttachments(files: SubmittedFile[], kind: 'career' | 'quote') {
+  const expectedField = kind === 'quote' ? 'photos' : 'cv'
+  if (files.some(({ fieldName }) => fieldName !== expectedField)) {
+    throw new RequestError(400)
+  }
+
+  if (kind === 'quote' && files.length > MAX_PHOTO_FILES) throw new RequestError(413)
+  if (kind === 'career' && files.length > 1) throw new RequestError(413)
+
+  const validated: ValidatedAttachment[] = []
+  for (const { file } of files) {
+    if (!file.size) throw new RequestError(400)
+    const extension = extensionOf(file.name)
+
+    if (kind === 'quote') {
+      if (file.size > MAX_PHOTO_BYTES) throw new RequestError(413)
+      const allowedExtensions = IMAGE_TYPES.get(file.type)
+      if (!allowedExtensions?.has(extension)) throw new RequestError(415)
+    } else {
+      if (file.size > MAX_CV_BYTES) throw new RequestError(413)
+      if (file.type !== 'application/pdf' || extension !== 'pdf') {
+        throw new RequestError(415)
+      }
+    }
+
+    if (!(await hasExpectedSignature(file))) throw new RequestError(415)
+    validated.push({ file, filename: sanitizeFilename(file.name) })
+  }
+  return validated
+}
+
+async function parseBody(request: Request, kind: 'career' | 'quote'): Promise<ParsedSubmission> {
+  const contentType = request.headers.get('Content-Type')?.split(';', 1)[0].trim().toLowerCase()
+  const contentLength = Number(request.headers.get('Content-Length') ?? 0)
+  const maximumRequestBytes = kind === 'quote'
+    ? MAX_MULTIPART_QUOTE_BYTES
+    : MAX_MULTIPART_CAREER_BYTES
+  if (Number.isFinite(contentLength) && contentLength > maximumRequestBytes) {
+    throw new RequestError(413)
+  }
+
+  if (contentType === 'application/json') {
+    const text = await request.text()
+    if (new TextEncoder().encode(text).byteLength > MAX_JSON_BODY_BYTES) {
+      throw new RequestError(413)
+    }
+
+    try {
+      const parsed: unknown = JSON.parse(text)
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+        throw new RequestError(400)
+      }
+      return { fields: parsed as JsonObject, files: [] }
+    } catch (error) {
+      if (error instanceof RequestError) throw error
+      throw new RequestError(400)
+    }
+  }
+
+  if (contentType !== 'multipart/form-data') throw new RequestError(415)
+
+  let formData: FormData
+  try {
+    formData = await request.formData()
+  } catch {
+    throw new RequestError(400)
+  }
+
+  const fields: JsonObject = {}
+  const files: SubmittedFile[] = []
+  let textBytes = 0
+  formData.forEach((value, name) => {
+    if (typeof value === 'string') {
+      if (Object.hasOwn(fields, name)) throw new RequestError(400)
+      textBytes += new TextEncoder().encode(value).byteLength
+      if (textBytes > MAX_JSON_BODY_BYTES) throw new RequestError(413)
+      fields[name] = value
+    } else {
+      files.push({ fieldName: name, file: value })
+    }
+  })
+
+  return { fields, files }
+}
+
+function quoteEmail(body: JsonObject, attachments: ValidatedAttachment[]) {
   const firstName = stringField(body, 'firstName', 80, { required: true })
   const lastName = stringField(body, 'lastName', 80, { required: true })
   const company = stringField(body, 'company', 120)
@@ -399,6 +539,13 @@ function quoteEmail(body: JsonObject) {
         { label: 'Descrizione del problema', value: problemDescription },
       ],
     },
+    {
+      title: 'Fotografie allegate',
+      rows: attachments.map(({ filename }, index) => ({
+        label: `Fotografia ${index + 1}`,
+        value: filename,
+      })),
+    },
   ]
 
   const title = `Nuova richiesta di assistenza — ${firstName} ${lastName}`
@@ -406,22 +553,25 @@ function quoteEmail(body: JsonObject) {
     callLabel: 'Chiama il cliente',
     firstName,
     phone,
+    whatsappMessage: `Buongiorno ${firstName}, ti contattiamo da Officina Belviso in merito alla richiesta di assistenza inviata dal nostro sito.`,
     whatsappLabel: 'Scrivi su WhatsApp',
   }
+  const automatedMessage = 'Questa email è stata generata automaticamente dal modulo di assistenza del sito.'
   return {
     html: renderHtml({
+      automatedMessage,
       contactActions,
       heading: 'Nuova richiesta di assistenza',
       sections,
     }),
     replyTo: email,
     subject: title,
-    text: `${title}\n\n${renderText(sections)}\n\n${renderContactText(contactActions)}\n\nRichiesta inviata dal sito Officina Belviso\nofficinabelviso.it`,
+    text: `${title}\n\n${renderText(sections)}\n\n${renderContactText(contactActions)}\n\nOfficina Belviso\nViale Sindaco Gerardo De Caro 9/11, Zona P.I.P.\n70016 Noicattaro (BA)\n\n${automatedMessage}\nofficinabelviso.it`,
     to: 'assistenza@officinabelviso.it',
   }
 }
 
-function careerEmail(body: JsonObject) {
+function careerEmail(body: JsonObject, attachments: ValidatedAttachment[]) {
   const firstName = stringField(body, 'firstName', 80, { required: true })
   const lastName = stringField(body, 'lastName', 80, { required: true })
   const email = stringField(body, 'email', 254, { required: true })
@@ -457,6 +607,13 @@ function careerEmail(body: JsonObject) {
         { label: 'Presentazione', value: message },
       ],
     },
+    {
+      title: 'Curriculum allegato',
+      rows: attachments.map(({ filename }) => ({
+        label: 'Nome file',
+        value: filename,
+      })),
+    },
   ]
 
   const title = `Nuova candidatura — ${firstName} ${lastName}`
@@ -464,32 +621,57 @@ function careerEmail(body: JsonObject) {
     callLabel: 'Chiama il candidato',
     firstName,
     phone,
+    whatsappMessage: `Buongiorno ${firstName}, ti contattiamo da Officina Belviso in merito alla candidatura inviata dal nostro sito.`,
     whatsappLabel: 'Scrivi su WhatsApp',
   }
+  const automatedMessage = 'Questa email è stata generata automaticamente dal modulo Lavora con noi del sito.'
   return {
     html: renderHtml({
+      automatedMessage,
       contactActions,
       heading: 'Nuova candidatura',
       sections,
     }),
     replyTo: email,
     subject: title,
-    text: `${title}\n\n${renderText(sections)}\n\n${renderContactText(contactActions)}\n\nRichiesta inviata dal sito Officina Belviso\nofficinabelviso.it`,
+    text: `${title}\n\n${renderText(sections)}\n\n${renderContactText(contactActions)}\n\nOfficina Belviso\nViale Sindaco Gerardo De Caro 9/11, Zona P.I.P.\n70016 Noicattaro (BA)\n\n${automatedMessage}\nofficinabelviso.it`,
     to: 'info@officinabelviso.it',
   }
 }
 
+function arrayBufferToBase64(buffer: ArrayBuffer) {
+  const bytes = new Uint8Array(buffer)
+  const chunkSize = 0x8000
+  let binary = ''
+  for (let index = 0; index < bytes.length; index += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(index, index + chunkSize))
+  }
+  return btoa(binary)
+}
+
+async function resendAttachments(attachments: ValidatedAttachment[]) {
+  return Promise.all(attachments.map(async ({ file, filename }) => ({
+    content: arrayBufferToBase64(await file.arrayBuffer()),
+    filename,
+  })))
+}
+
 async function sendEmail(request: Request, env: Env, kind: 'career' | 'quote') {
-  const body = await parseBody(request)
+  const submission = await parseBody(request, kind)
+  const body = submission.fields
   const honeypot = stringField(body, 'website', 200)
   if (honeypot) return jsonResponse(200, { ok: true })
+
+  const attachments = await validateAttachments(submission.files, kind)
 
   if (!env.RESEND_API_KEY) {
     console.error('Resend configuration is missing')
     return jsonResponse(500, { ok: false })
   }
 
-  const email = kind === 'quote' ? quoteEmail(body) : careerEmail(body)
+  const email = kind === 'quote'
+    ? quoteEmail(body, attachments)
+    : careerEmail(body, attachments)
   const resendPayload: JsonObject = {
     from: EMAIL_FROM,
     to: [email.to],
@@ -498,6 +680,7 @@ async function sendEmail(request: Request, env: Env, kind: 'career' | 'quote') {
     text: email.text,
   }
   if (email.replyTo) resendPayload.reply_to = email.replyTo
+  if (attachments.length) resendPayload.attachments = await resendAttachments(attachments)
 
   let resendResponse: Response
   try {

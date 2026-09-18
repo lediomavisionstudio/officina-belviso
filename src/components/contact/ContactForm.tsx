@@ -33,6 +33,12 @@ type FormErrors = Record<string, string>
 
 type SubmissionStatus = 'error' | 'idle' | 'success'
 
+const MAX_PHOTO_FILES = 4
+const MAX_PHOTO_BYTES = 4 * 1024 * 1024
+const MAX_CV_BYTES = 5 * 1024 * 1024
+const IMAGE_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
+const IMAGE_EXTENSIONS = new Set(['jpg', 'jpeg', 'png', 'webp'])
+
 const vehicleBrands = [
   'Mercedes-Benz',
   'Volvo',
@@ -115,10 +121,39 @@ function validateForm(data: FormData, mode: ContactFormMode) {
   return errors
 }
 
+function fileExtension(filename: string) {
+  return filename.split('.').pop()?.toLowerCase() ?? ''
+}
+
+function validateAttachments(files: File[], mode: ContactFormMode) {
+  if (mode === 'quote') {
+    if (files.length > MAX_PHOTO_FILES) {
+      return 'Puoi allegare al massimo 4 fotografie.'
+    }
+    if (files.some((file) => file.size > MAX_PHOTO_BYTES)) {
+      return 'Ogni fotografia deve pesare al massimo 4 MB.'
+    }
+    if (files.some((file) => !IMAGE_MIME_TYPES.has(file.type) || !IMAGE_EXTENSIONS.has(fileExtension(file.name)))) {
+      return 'Sono consentiti solo file JPG, JPEG, PNG o WEBP.'
+    }
+    return ''
+  }
+
+  if (files.length > 1) return 'Puoi allegare un solo curriculum.'
+  if (files.some((file) => file.size > MAX_CV_BYTES)) {
+    return 'Il curriculum deve pesare al massimo 5 MB.'
+  }
+  if (files.some((file) => file.type !== 'application/pdf' || fileExtension(file.name) !== 'pdf')) {
+    return 'Il curriculum deve essere un file PDF.'
+  }
+  return ''
+}
+
 export function ContactForm({ mode }: ContactFormProps) {
   const { selectedInterventions, setSelectedInterventions } = useQuoteRequest()
   const formId = useId().replace(/:/g, '')
   const [errors, setErrors] = useState<FormErrors>({})
+  const [attachments, setAttachments] = useState<File[]>([])
   const [phonePrefix, setPhonePrefix] = useState(phonePrefixOptions[0])
   const [phoneNumber, setPhoneNumber] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -146,6 +181,23 @@ export function ContactForm({ mode }: ContactFormProps) {
     clearError(fieldName)
   }
 
+  const attachmentFieldName = mode === 'quote' ? 'photos' : 'cv'
+  const handleFilesChange = (newFiles: File[]) => {
+    const nextFiles = [...attachments, ...newFiles]
+    const attachmentError = validateAttachments(nextFiles, mode)
+    if (attachmentError) {
+      setErrors((current) => ({ ...current, [attachmentFieldName]: attachmentError }))
+      return
+    }
+    setAttachments(nextFiles)
+    clearError(attachmentFieldName)
+  }
+
+  const handleFileRemove = (index: number) => {
+    setAttachments((current) => current.filter((_, currentIndex) => currentIndex !== index))
+    clearError(attachmentFieldName)
+  }
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (submissionLock.current) return
@@ -153,6 +205,8 @@ export function ContactForm({ mode }: ContactFormProps) {
     const form = event.currentTarget
     const formData = new FormData(form)
     const nextErrors = validateForm(formData, mode)
+    const attachmentError = validateAttachments(attachments, mode)
+    if (attachmentError) nextErrors[attachmentFieldName] = attachmentError
     setErrors(nextErrors)
 
     const firstInvalidField = Object.keys(nextErrors)[0]
@@ -214,12 +268,17 @@ export function ContactForm({ mode }: ContactFormProps) {
     setSubmissionStatus('idle')
 
     try {
+      const requestBody = new FormData()
+      Object.entries(payload).forEach(([name, value]) => {
+        requestBody.append(name, String(value))
+      })
+      attachments.forEach((file) => {
+        requestBody.append(attachmentFieldName, file, file.name)
+      })
+
       const response = await fetch(mode === 'quote' ? '/api/contact' : '/api/careers', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
+        body: requestBody,
       })
 
       if (!response.ok) throw new Error('Submission failed')
@@ -228,6 +287,7 @@ export function ContactForm({ mode }: ContactFormProps) {
       setPhonePrefix(phonePrefixOptions[0])
       setPhoneNumber('')
       setSelectedInterventions([])
+      setAttachments([])
       setErrors({})
       setSubmissionStatus('success')
       setStatus(
@@ -416,9 +476,17 @@ export function ContactForm({ mode }: ContactFormProps) {
               required
             />
             <UploadField
+              accept="image/jpeg,image/png,image/webp"
+              disabled={isSubmitting}
               id={id('photos')}
               label="Fotografie del veicolo"
-              description="La funzione di caricamento sarà disponibile con l’attivazione del servizio di invio."
+              description="Fino a 4 fotografie JPG, PNG o WEBP, massimo 4 MB ciascuna."
+              error={errors.photos}
+              files={attachments}
+              maxFiles={MAX_PHOTO_FILES}
+              name="photos"
+              onFilesChange={handleFilesChange}
+              onRemove={handleFileRemove}
             />
           </fieldset>
         </>
@@ -439,9 +507,17 @@ export function ContactForm({ mode }: ContactFormProps) {
             rows={5}
           />
           <UploadField
+            accept="application/pdf"
+            disabled={isSubmitting}
             id={id('cv')}
             label="Curriculum vitae"
-            description="La funzione di caricamento sarà disponibile con l’attivazione del servizio di invio."
+            description="Un file PDF, massimo 5 MB."
+            error={errors.cv}
+            files={attachments}
+            maxFiles={1}
+            name="cv"
+            onFilesChange={handleFilesChange}
+            onRemove={handleFileRemove}
           />
         </fieldset>
       )}
