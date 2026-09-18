@@ -8,6 +8,10 @@ const sitemapUrls = [
 ]
 const localBusinessSelector =
   'script#officina-belviso-local-business-jsonld[type="application/ld+json"]'
+const homeTitle =
+  'Officina Belviso | Veicoli industriali a Noicattaro (BA)'
+const homeDescription =
+  "Officina Belviso a Noicattaro (BA): diagnosi, manutenzione e riparazione di veicoli industriali e mezzi pesanti. Scopri i servizi dell'officina."
 
 test.describe('Technical SEO', () => {
   test('serves a minimal canonical sitemap as XML', async ({ request }) => {
@@ -83,6 +87,37 @@ test.describe('Technical SEO', () => {
       'content',
       'noindex, nofollow',
     )
+  })
+
+  test('uses local and service-specific metadata on the home route', async ({ page }) => {
+    await page.goto('/')
+
+    await expect(page).toHaveTitle(homeTitle)
+    await expect(page.locator('meta[name="description"]')).toHaveAttribute(
+      'content',
+      homeDescription,
+    )
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+      'href',
+      `${canonicalOrigin}/`,
+    )
+    await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
+      'content',
+      'index, follow',
+    )
+    await expect(page.locator('meta[property="og:title"]')).toHaveAttribute(
+      'content',
+      homeTitle,
+    )
+    await expect(page.locator('meta[property="og:description"]')).toHaveAttribute(
+      'content',
+      homeDescription,
+    )
+    await expect(page.locator('meta[property="og:url"]')).toHaveAttribute(
+      'content',
+      `${canonicalOrigin}/`,
+    )
+    await expect(page.locator(localBusinessSelector)).toHaveCount(1)
   })
 
   test('publishes one valid AutoRepair JSON-LD block only on the home route', async ({ page }) => {

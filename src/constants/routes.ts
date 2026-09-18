@@ -2,7 +2,7 @@ import type { AppRoute } from '../types/routes'
 import { localBusinessStructuredData } from '../config/site'
 
 const homeDescription =
-  'Officina Belviso offre diagnosi, manutenzione e riparazione per veicoli industriali, con interventi orientati a sicurezza e affidabilità.'
+  "Officina Belviso a Noicattaro (BA): diagnosi, manutenzione e riparazione di veicoli industriali e mezzi pesanti. Scopri i servizi dell'officina."
 
 function futurePageSeo(
   title: string,
@@ -22,7 +22,7 @@ export const appRoutes = [
     path: '/',
     component: 'home',
     seo: {
-      title: 'Officina Belviso | Assistenza veicoli industriali',
+      title: 'Officina Belviso | Veicoli industriali a Noicattaro (BA)',
       description: homeDescription,
       canonicalPath: '/',
       structuredData: localBusinessStructuredData,
